@@ -20,7 +20,7 @@ Embeddings projections using TensorFlow Projector and HuggingFace.
   Input text
 
 - model_name: string
-  HugginFace model name
+  HuggingFace model name
  
 - level: string
 
