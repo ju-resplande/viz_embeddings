@@ -1,5 +1,7 @@
 # viz_embeddings
-Embeddings projections using TensorFlow Projector and HuggingFace
+Embeddings projections using TensorFlow Projector and HuggingFace. 
+
+[Example](http://projector.tensorflow.org/?config=https://raw.githubusercontent.com/jubs12/viz_embeddings/master/examples/config.json)
 
 ## Requirements
 - transformers
@@ -31,3 +33,8 @@ Embeddings projections using TensorFlow Projector and HuggingFace
   Pytorch functions to agreggate tokens embedding vectors to form word or array. 
   
  2. Upload embeddings.tsv and vocab.tsv to [Embedding Projector](http://projector.tensorflow.org/)
+ 
+ OR
+ 
+ Generate a config.json file as in examples/config.son
+ Access link http://projector.tensorflow.org/?config={your config_url}
