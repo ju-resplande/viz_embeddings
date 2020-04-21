@@ -36,5 +36,6 @@ Embeddings projections using TensorFlow Projector and HuggingFace.
  
      OR
 
-     Generate a config.json file as in examples/config.son
-     Access link http://projector.tensorflow.org/?config={your config_url}
+     - Generate a config.json file as in examples/config.son
+     
+     - Access link http://projector.tensorflow.org/?config={your config_url}
