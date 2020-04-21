@@ -9,7 +9,7 @@ class Level(Enum):
     word = 2
     sentence = 3
 
-def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func = torch.mean):    
+def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):    
     nltk.download('punkt')
 
     if level in ['token', 'word']:
@@ -20,7 +20,7 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func = torch.m
         embeddings = model(input_ids)[0][0]
         
         if level == 'token':
-            return vocab, embeddings
+            return vocab, embeddings.tolist()
         elif level == 'word':
             words = nltk.word_tokenize(text)
 
@@ -43,7 +43,6 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func = torch.m
                     selected_words.append(word)
                 
                 vocab_idx = vocab_idx+1
-
             selected_embeddings = []
             for idx in map_idx:
                 if type(idx) == int:
@@ -72,7 +71,7 @@ def extract_embeddings(text, model_name, level_name, **kargs):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModel.from_pretrained(model_name)
 
-    aggr_func = kargs['aggr_func'] if 'aggr_func' in kargs.keys() else None 
+    aggr_func = kargs['aggr_func'] if 'aggr_func' in kargs.keys() else torch.mean
    
     vocab, embeddings = vocabulary_and_embeddings(text, tokenizer, model, level_name, aggr_func)   
 
