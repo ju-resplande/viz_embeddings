@@ -1,0 +1,1 @@
+{"embeddings": [{"tensorName": "bert-base-portuguese-cased", "tensorShape": [1000, 50], "tensorPath": "https://raw.githubusercontent.com/jubs12/viz_embeddings/master/examples/example%202/embeddings.tsv", "metadataPath": "https://raw.githubusercontent.com/jubs12/viz_embeddings/master/examples/example%202/vocab.tsv"}]}

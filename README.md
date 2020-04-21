@@ -1,7 +1,11 @@
 # viz_embeddings
 Embeddings projections using TensorFlow Projector and HuggingFace. 
 
-[Example](http://projector.tensorflow.org/?config=https://raw.githubusercontent.com/jubs12/viz_embeddings/master/examples/config.json)
+[Example 1](http://projector.tensorflow.org/?config=https://raw.githubusercontent.com/jubs12/viz_embeddings/master/examples/example%201/config.json)
+
+
+
+[Example 2](http://projector.tensorflow.org/?config=https://raw.githubusercontent.com/jubs12/viz_embeddings/master/examples/example%202/config.json)
 
 ## Requirements
 - transformers
@@ -21,7 +25,7 @@ Embeddings projections using TensorFlow Projector and HuggingFace.
 
 - model_name: string
   HuggingFace model name
- 
+
 - level: string
 
   Represents the segmentation level
@@ -33,7 +37,7 @@ Embeddings projections using TensorFlow Projector and HuggingFace.
   Pytorch functions to agreggate tokens embedding vectors to form word or array. 
   
  2. Upload embeddings.tsv and vocab.tsv to [Embedding Projector](http://projector.tensorflow.org/)
- 
+
      OR
 
      - Generate a config.json file as in examples/config.son
