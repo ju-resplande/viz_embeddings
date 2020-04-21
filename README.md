@@ -34,7 +34,7 @@ Embeddings projections using TensorFlow Projector and HuggingFace.
   
  2. Upload embeddings.tsv and vocab.tsv to [Embedding Projector](http://projector.tensorflow.org/)
  
- OR
- 
- Generate a config.json file as in examples/config.son
- Access link http://projector.tensorflow.org/?config={your config_url}
+     OR
+
+     Generate a config.json file as in examples/config.son
+     Access link http://projector.tensorflow.org/?config={your config_url}
