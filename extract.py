@@ -65,13 +65,11 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
 
         return sentences, embeddings_list
 
-def extract_embeddings(text, model_name, level_name, **kargs):    
+def extract_embeddings(text, model_name, level_name, aggr_func = torch.mean):    
     assert Level[level_name]
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModel.from_pretrained(model_name)
-
-    aggr_func = kargs['aggr_func'] if 'aggr_func' in kargs.keys() else torch.mean
    
     vocab, embeddings = vocabulary_and_embeddings(text, tokenizer, model, level_name, aggr_func)   
 
