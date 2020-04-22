@@ -1047,9 +1047,14 @@ table {
       
   <ul>
     <li class="mono"><a href="#extract.extract_embeddings">extract_embeddings</a></li>
+    <li class="mono"><a href="#extract.filter_vocabulary">filter_vocabulary</a></li>
     <li class="mono"><a href="#extract.form_sentence_embeddings">form_sentence_embeddings</a></li>
+    <li class="mono"><a href="#extract.form_sentence_vocab">form_sentence_vocab</a></li>
     <li class="mono"><a href="#extract.form_token_embeddings">form_token_embeddings</a></li>
+    <li class="mono"><a href="#extract.form_token_vocab">form_token_vocab</a></li>
     <li class="mono"><a href="#extract.form_word_embeddings">form_word_embeddings</a></li>
+    <li class="mono"><a href="#extract.form_word_vocab">form_word_vocab</a></li>
+    <li class="mono"><a href="#extract.unique_vocabulary">unique_vocabulary</a></li>
     <li class="mono"><a href="#extract.vocabulary_and_embeddings">vocabulary_and_embeddings</a></li>
   </ul>
 
@@ -1091,6 +1096,8 @@ Embbedings vectors are saved as embedding.tsv.</p>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
 <span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModel</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">nltk</span>
@@ -1104,8 +1111,52 @@ Embbedings vectors are saved as embedding.tsv.</p>
     <span class="n">word</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">sentence</span> <span class="o">=</span> <span class="mi">3</span>
 
+<span class="k">def</span> <span class="nf">form_token_vocab</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Separates text in tokens  </span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            text (str): input text  </span>
+<span class="sd">            tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">          tokens (list) : tokens list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tokens</span>
+
+<span class="k">def</span> <span class="nf">form_word_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Separates text in words  </span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            text (str): input text  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">          words (list) : words list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;punkt&#39;</span><span class="p">)</span>
+
+    <span class="n">words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">words</span>
+
+<span class="k">def</span> <span class="nf">form_sentence_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Separates text in sentences  </span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            text (str): input text  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">          sentences (list) : sentences list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;punkt&#39;</span><span class="p">)</span>
+
+    <span class="n">sentences</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sentences</span>
+
 <span class="k">def</span> <span class="nf">form_token_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate tokense embeddings vector</span>
+    <span class="sd">&quot;&quot;&quot;Generate tokens embeddings list </span>
 
 <span class="sd">        Args:  </span>
 <span class="sd">            text (str): input text  </span>
@@ -1113,16 +1164,20 @@ Embbedings vectors are saved as embedding.tsv.</p>
 <span class="sd">            model (transformers.AutoModel): HuggingFace Transformer Model  </span>
 
 <span class="sd">       Returns:  </span>
-<span class="sd">            embeddings: tokens embeddings vector</span>
+<span class="sd">            embeddings (torch.tensor): tokens embeddings tensor</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">encoded</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">add_special_tokens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">encoded</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="k">return</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">embeddings</span>
 
 
 <span class="k">def</span> <span class="nf">form_word_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">words</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate tokense embeddings vector</span>
+    <span class="sd">&quot;&quot;&quot;Generate tokens embeddings list  </span>
+
+<span class="sd">        Words composed by more than one token, have tokens embbedings </span>
+<span class="sd">        combined in one embbeding through aggr_func.</span>
 
 <span class="sd">        Args:  </span>
 <span class="sd">            text (str): input text  </span>
@@ -1132,10 +1187,11 @@ Embbedings vectors are saved as embedding.tsv.</p>
 <span class="sd">            aggr_func (func): Agreggation Function to form embedding  </span>
 
 <span class="sd">       Returns:  </span>
-<span class="sd">            embeddings: tokens embeddings vector</span>
+<span class="sd">            embeddings (torch.tensor): tokens embeddings tensor</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">tokens</span><span class="p">,</span> <span class="n">token_embeddings</span> <span class="o">=</span> <span class="n">vocabulary_and_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s1">&#39;token&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">form_token_vocab</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">tokens_tensor</span> <span class="o">=</span> <span class="n">form_token_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
     <span class="n">token_idx</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">map_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
@@ -1153,92 +1209,217 @@ Embbedings vectors are saved as embedding.tsv.</p>
             <span class="n">map_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">word_idx</span><span class="p">)</span>
         <span class="n">token_idx</span> <span class="o">=</span> <span class="n">token_idx</span><span class="o">+</span><span class="mi">1</span>
 
-    <span class="n">word_embeddings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">map_idx</span><span class="p">:</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="n">token_embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-        <span class="n">word_embedding</span> <span class="o">=</span> <span class="n">token_embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span> \
-                         <span class="k">else</span> <span class="n">aggr_func</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">token</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="n">word_embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">word_embedding</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="n">word_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">mapping</span> <span class="ow">in</span> <span class="n">map_idx</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">word_embedding</span> <span class="o">=</span> <span class="n">tokens_tensor</span><span class="p">[</span><span class="n">mapping</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="c1">#[tokens_tensor[idx] for idx in mapping] for tensor#</span>
+            <span class="n">word_embedding</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span> 
+                <span class="n">token_tensor</span> <span class="o">=</span> <span class="n">tokens_tensor</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">word_embedding</span> <span class="o">=</span> <span class="n">token_tensor</span> <span class="k">if</span> <span class="n">word_embedding</span> <span class="o">==</span> <span class="kc">None</span> \
+                                 <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">word_embedding</span><span class="p">,</span> <span class="n">token_tensor</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+            
+            <span class="n">word_embedding</span> <span class="o">=</span> <span class="n">aggr_func</span><span class="p">(</span><span class="n">word_embedding</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;mapping should be list or int&#39;</span><span class="p">)</span>
+        <span class="n">word_embeddings</span> <span class="o">=</span> <span class="n">word_embedding</span> <span class="k">if</span> <span class="n">word_embeddings</span> <span class="o">==</span> <span class="kc">None</span> \
+                          <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">word_embeddings</span><span class="p">,</span> <span class="n">word_embedding</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> 
     <span class="k">return</span> <span class="n">word_embeddings</span>
 
 <span class="k">def</span> <span class="nf">form_sentence_embeddings</span><span class="p">(</span><span class="n">sentences</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate sentence embeddings vector  </span>
+    <span class="sd">&quot;&quot;&quot;Generate sentence embeddings list  </span>
+
+<span class="sd">        Sentences composed by more than one token, have tokens embbedings </span>
+<span class="sd">        combined in one embbeding through aggr_func.  </span>
 
 <span class="sd">        Args:  </span>
 <span class="sd">            sentences (str): sentences list  </span>
 <span class="sd">            tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  </span>
 <span class="sd">            model (transformers.AutoModel): HuggingFace Transformer Model  </span>
-<span class="sd">            aggr_func (func): Agreggation Function to form embedding  </span>
+<span class="sd">            aggr_func (func): function to aggregate tensor embbedings  </span>
 <span class="sd">            </span>
 <span class="sd">       Returns:  </span>
-<span class="sd">            embeddings: sentences embeddings vector</span>
+<span class="sd">            embeddings (torch.tensor): tokens embeddings tensor</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">sentence_embeddings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">sentence_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">sentences</span><span class="p">:</span>
         <span class="n">token_embeddings</span> <span class="o">=</span> <span class="n">form_token_embeddings</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-        <span class="n">sentence_embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aggr_func</span><span class="p">(</span><span class="n">token_embeddings</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="n">sentence_embedding</span> <span class="o">=</span> <span class="n">aggr_func</span><span class="p">(</span><span class="n">token_embeddings</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">sentence_embeddings</span> <span class="o">=</span>  <span class="n">sentence_embedding</span> <span class="k">if</span> <span class="n">sentence_embeddings</span> <span class="o">==</span> <span class="kc">None</span> \
+                            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">sentence_embeddings</span><span class="p">,</span> <span class="n">sentence_embedding</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> 
+
 
     <span class="k">return</span>  <span class="n">sentence_embeddings</span>
 
 <span class="k">def</span> <span class="nf">vocabulary_and_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Generate embeddings vector and vocabulary  </span>
 
+<span class="sd">        Vocabulary is chopped according to level.</span>
+<span class="sd">        If needed, aggregation function is used.</span>
+
 <span class="sd">        Args:  </span>
 <span class="sd">            text (str): input text  </span>
 <span class="sd">            tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  </span>
 <span class="sd">            model (transformers.AutoModel): HuggingFace Transformer Model  </span>
 <span class="sd">            level (str): Segmentation level  </span>
-<span class="sd">            aggr_func (func): Agreggation Function  </span>
+<span class="sd">            aggr_func (func): function to aggregate tensor embbedings  </span>
 
 <span class="sd">       Returns:  </span>
-<span class="sd">            vocabulary: embeddings vocabulary  </span>
-<span class="sd">            embeddings: embeddings vector</span>
+<span class="sd">            vocab (list): embeddings vocabulary</span>
+<span class="sd">            embeddings (list): embeddings</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;punkt&#39;</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;token&#39;</span><span class="p">:</span>
-        <span class="n">vocab</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">vocab</span> <span class="o">=</span> <span class="n">form_token_vocab</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="n">form_token_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;word&#39;</span><span class="p">:</span>
-        <span class="n">vocab</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">vocab</span> <span class="o">=</span> <span class="n">form_word_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="n">form_word_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;sentenc&#39;</span><span class="p">:</span>
-        <span class="n">vocab</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;sentence&#39;</span><span class="p">:</span>
+        <span class="n">vocab</span> <span class="o">=</span> <span class="n">form_sentence_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="n">form_sentence_embeddings</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">)</span>
-
 
     <span class="k">return</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span>
 
-<span class="k">def</span> <span class="nf">extract_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">level_name</span><span class="p">,</span> <span class="n">aggr_func</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Extract embeddings from text using Hugging Face model</span>
+<span class="k">def</span> <span class="nf">filter_vocabulary</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">filter_func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Filter vocabulary according to filter_func</span>
 
-<span class="sd">        Embbedings are save as embeddings.tsv.</span>
-<span class="sd">        Vocabulary is saved as vocabulary.tsv.</span>
+<span class="sd">        Args:  </span>
+<span class="sd">            vocab(list): embeddings vocabulary  </span>
+<span class="sd">            embeddings(list): embeddings vector  </span>
+<span class="sd">            filter_func (func): Filter vocabulary level function  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">            vocab(list): filtered vocabulary  </span>
+<span class="sd">            embeddings(list): filtered embeddings vocabulary  </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vocab_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">))</span> <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">vocab</span><span class="p">[</span><span class="n">idx</span><span class="p">])]</span>
+    <span class="n">selected_vocab</span> <span class="o">=</span> <span class="p">[</span><span class="n">vocab</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">vocab_idx</span><span class="p">]</span>
+    
+    <span class="c1">#embeddings = [embeddings[idx] for idx in vocab_idx]</span>
+    <span class="n">selected_embedding</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">vocab_idx</span><span class="p">:</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">selected_embedding</span> <span class="o">=</span> <span class="n">selected</span> <span class="k">if</span> <span class="n">selected_embedding</span> <span class="o">==</span> <span class="kc">None</span> \
+                             <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">selected_embedding</span><span class="p">,</span> <span class="n">selected</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">selected_vocab</span><span class="p">,</span> <span class="n">selected_embedding</span>
+
+<span class="k">def</span> <span class="nf">unique_vocabulary</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">,</span> <span class="n">do_lower</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Combined repeated terms into a unique term  </span>
+<span class="sd">    </span>
+<span class="sd">      Depends on segmentation level on vocab.</span>
+<span class="sd">      If vocab is chopped in words, words will be considered.</span>
+<span class="sd">      Hence, it is probably useless in sentences segmentation.</span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            vocab(list): embeddings vocabulary  </span>
+<span class="sd">            embeddings(list): embeddings vector  </span>
+<span class="sd">            aggr_func (func): function to aggregate tensor embbedings  </span>
+<span class="sd">             do_lower (bool): whether considere cased  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">            vocab(list): embeddings vocabulary with unique values  </span>
+<span class="sd">            embeddings(list): vocabulary embeddings  </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">unique_vocab</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">term</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">vocab</span><span class="p">]))</span> <span class="k">if</span> <span class="n">do_lower</span>\
+                    <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">vocab</span><span class="p">))</span> 
+    
+
+    <span class="n">compare</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">do_lower</span> \
+                    <span class="k">else</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
+
+    <span class="n">unique_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">unique_term</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_vocab</span><span class="p">):</span>
+
+        <span class="n">unique_embedding</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">compare</span><span class="p">(</span><span class="n">vocab</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span><span class="n">unique_term</span><span class="p">):</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+                <span class="n">unique_embedding</span> <span class="o">=</span> <span class="n">selected</span> <span class="k">if</span> <span class="n">unique_embedding</span> <span class="o">==</span> <span class="kc">None</span> \
+                                   <span class="k">else</span>  <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">unique_embedding</span><span class="p">,</span> <span class="n">selected</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">unique_embedding</span> <span class="o">=</span> <span class="n">aggr_func</span><span class="p">(</span><span class="n">unique_embedding</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">unique_embeddings</span> <span class="o">=</span> <span class="n">unique_embedding</span> <span class="k">if</span> <span class="n">unique_embeddings</span> <span class="o">==</span> <span class="kc">None</span> \
+                            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">unique_embeddings</span><span class="p">,</span> <span class="n">unique_embedding</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">unique_vocab</span><span class="p">,</span> <span class="n">unique_embeddings</span>
+
+<span class="k">def</span> <span class="nf">extract_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">level_name</span><span class="p">,</span> <span class="n">aggr_func</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">filter_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">unique</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">doc_stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">do_lower</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Extract embeddings from text using Hugging Face model  </span>
+
+<span class="sd">        Embbedings are save as embeddings.tsv.  </span>
+<span class="sd">        Vocabulary is saved as vocabulary.tsv.  </span>
 
 <span class="sd">            </span>
 <span class="sd">        Args:  </span>
 <span class="sd">            text (str): input text  </span>
 <span class="sd">            model_name (str): Hugging Face model name  </span>
-<span class="sd">            level_name (str): Hugging Face model  </span>
-<span class="sd">            aggr_func (func): Agreggation Function  </span>
+<span class="sd">            level_name (str): text segmentation level name  </span>
+<span class="sd">            aggr_func (func): function to aggregate tensor embbedings  </span>
+<span class="sd">            filter_func (func): filter vocabulary level function  </span>
+<span class="sd">            unique (bool): if terms on level_name should be unique  </span>
+<span class="sd">            do_lower (bool): when unique = True, whether considere cased  </span>
 
 <span class="sd">       Raises:  </span>
-<span class="sd">            ValueError: f&#39;There is no {level_name} segmentation.&#39;</span>
+<span class="sd">            ValueError: f&#39;There is no {level_name} segmentation.&#39;  </span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="n">level_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Level</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">level_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Level</span><span class="o">.</span><span class="n">_member_names_</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;There is no </span><span class="si">{level_name}</span><span class="s1"> segmentation.&#39;</span><span class="p">)</span>
 
     <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
 
-    <span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span> <span class="o">=</span> <span class="n">vocabulary_and_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">level_name</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">)</span>
+  
+    <span class="n">words</span> <span class="o">=</span>  <span class="n">form_word_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">doc_length</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span><span class="o">/</span><span class="n">doc_stride</span><span class="p">)</span>
+    <span class="n">doc_lst</span> <span class="o">=</span> <span class="p">[</span><span class="n">words</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="n">doc_length</span><span class="p">:</span> <span class="nb">min</span><span class="p">((</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">doc_length</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">))]</span>\
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">doc_stride</span><span class="p">)]</span>
+    <span class="n">doc_lst</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">doc_lst</span><span class="p">]</span>
+    <span class="n">vocab</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">doc_lst</span><span class="p">:</span>
+        <span class="n">doc_vocab</span><span class="p">,</span> <span class="n">doc_embeddings</span> <span class="o">=</span> <span class="n">vocabulary_and_embeddings</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> 
+                                                            <span class="n">tokenizer</span><span class="p">,</span> 
+                                                            <span class="n">model</span><span class="p">,</span> 
+                                                            <span class="n">level_name</span><span class="p">,</span> 
+                                                            <span class="n">aggr_func</span><span class="p">)</span>
+        <span class="n">vocab</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">doc_vocab</span><span class="p">)</span>
+        <span class="n">embeddings</span> <span class="o">=</span> <span class="n">doc_embeddings</span> <span class="k">if</span> <span class="n">embeddings</span> <span class="o">==</span> <span class="kc">None</span> \
+                    <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">doc_embeddings</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1">#except RuntimeError:</span>
+    <span class="c1">#    message = f&#39;Please use doc_stride higher than {doc_stride} for this input&#39;</span>
+    <span class="c1">#    print(message)</span>
+    <span class="c1">#    return </span>
+
+    <span class="k">if</span> <span class="n">unique</span><span class="p">:</span>
+        <span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span> <span class="o">=</span> <span class="n">unique_vocabulary</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> 
+                                              <span class="n">embeddings</span><span class="p">,</span>
+                                              <span class="n">aggr_func</span><span class="p">,</span>
+                                              <span class="n">do_lower</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">filter_func</span><span class="p">:</span>
+        <span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span> <span class="o">=</span> <span class="n">filter_vocabulary</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> 
+                                              <span class="n">embeddings</span><span class="p">,</span>
+                                              <span class="n">filter_func</span><span class="p">)</span>
+
+
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;embeddings.tsv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-
     <span class="n">series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">series</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;embeddings.tsv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">series</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;vocab.tsv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </pre></div>
 
@@ -1252,55 +1433,150 @@ Embbedings vectors are saved as embedding.tsv.</p>
       
   <div class="item">
     <div class="name def" id="extract.extract_embeddings">
-    <p>def <span class="ident">extract_embeddings</span>(</p><p>text, model_name, level_name, aggr_func=&lt;built-in method mean of type object at 0x7f7b7ba88b20&gt;)</p>
+    <p>def <span class="ident">extract_embeddings</span>(</p><p>text, model_name, level_name, aggr_func=&lt;built-in method mean of type object at 0x7f75a0c72b20&gt;, filter_func=&lt;function &lt;lambda&gt; at 0x7f75412c5200&gt;, unique=True, doc_stride=1, do_lower=False)</p>
     </div>
     
 
     
   
-    <div class="desc"><p>Extract embeddings from text using Hugging Face model</p>
-<p>Embbedings are save as embeddings.tsv.
- Vocabulary is saved as vocabulary.tsv.</p>
+    <div class="desc"><p>Extract embeddings from text using Hugging Face model  </p>
+<p>Embbedings are save as embeddings.tsv.<br />
+ Vocabulary is saved as vocabulary.tsv.  </p>
 <p>Args:<br />
      text (str): input text<br />
      model_name (str): Hugging Face model name<br />
-     level_name (str): Hugging Face model<br />
-     aggr_func (func): Agreggation Function  </p>
+     level_name (str): text segmentation level name<br />
+     aggr_func (func): function to aggregate tensor embbedings<br />
+     filter_func (func): filter vocabulary level function<br />
+     unique (bool): if terms on level_name should be unique<br />
+     do_lower (bool): when unique = True, whether considere cased  </p>
 <p>Raises:<br />
      ValueError: f'There is no {level_name} segmentation.'</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.extract_embeddings', this);">Show source &equiv;</a></p>
   <div id="source-extract.extract_embeddings" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">extract_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">level_name</span><span class="p">,</span> <span class="n">aggr_func</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Extract embeddings from text using Hugging Face model</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">extract_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">level_name</span><span class="p">,</span> <span class="n">aggr_func</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">filter_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">unique</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">doc_stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">do_lower</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Extract embeddings from text using Hugging Face model  </span>
 
-<span class="sd">        Embbedings are save as embeddings.tsv.</span>
-<span class="sd">        Vocabulary is saved as vocabulary.tsv.</span>
+<span class="sd">        Embbedings are save as embeddings.tsv.  </span>
+<span class="sd">        Vocabulary is saved as vocabulary.tsv.  </span>
 
 <span class="sd">            </span>
 <span class="sd">        Args:  </span>
 <span class="sd">            text (str): input text  </span>
 <span class="sd">            model_name (str): Hugging Face model name  </span>
-<span class="sd">            level_name (str): Hugging Face model  </span>
-<span class="sd">            aggr_func (func): Agreggation Function  </span>
+<span class="sd">            level_name (str): text segmentation level name  </span>
+<span class="sd">            aggr_func (func): function to aggregate tensor embbedings  </span>
+<span class="sd">            filter_func (func): filter vocabulary level function  </span>
+<span class="sd">            unique (bool): if terms on level_name should be unique  </span>
+<span class="sd">            do_lower (bool): when unique = True, whether considere cased  </span>
 
 <span class="sd">       Raises:  </span>
-<span class="sd">            ValueError: f&#39;There is no {level_name} segmentation.&#39;</span>
+<span class="sd">            ValueError: f&#39;There is no {level_name} segmentation.&#39;  </span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="n">level_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Level</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">level_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Level</span><span class="o">.</span><span class="n">_member_names_</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;There is no </span><span class="si">{level_name}</span><span class="s1"> segmentation.&#39;</span><span class="p">)</span>
 
     <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
 
-    <span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span> <span class="o">=</span> <span class="n">vocabulary_and_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">level_name</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">)</span>
+  
+    <span class="n">words</span> <span class="o">=</span>  <span class="n">form_word_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">doc_length</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span><span class="o">/</span><span class="n">doc_stride</span><span class="p">)</span>
+    <span class="n">doc_lst</span> <span class="o">=</span> <span class="p">[</span><span class="n">words</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="n">doc_length</span><span class="p">:</span> <span class="nb">min</span><span class="p">((</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">doc_length</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">))]</span>\
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">doc_stride</span><span class="p">)]</span>
+    <span class="n">doc_lst</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">doc_lst</span><span class="p">]</span>
+    <span class="n">vocab</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">doc_lst</span><span class="p">:</span>
+        <span class="n">doc_vocab</span><span class="p">,</span> <span class="n">doc_embeddings</span> <span class="o">=</span> <span class="n">vocabulary_and_embeddings</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> 
+                                                            <span class="n">tokenizer</span><span class="p">,</span> 
+                                                            <span class="n">model</span><span class="p">,</span> 
+                                                            <span class="n">level_name</span><span class="p">,</span> 
+                                                            <span class="n">aggr_func</span><span class="p">)</span>
+        <span class="n">vocab</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">doc_vocab</span><span class="p">)</span>
+        <span class="n">embeddings</span> <span class="o">=</span> <span class="n">doc_embeddings</span> <span class="k">if</span> <span class="n">embeddings</span> <span class="o">==</span> <span class="kc">None</span> \
+                    <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">doc_embeddings</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1">#except RuntimeError:</span>
+    <span class="c1">#    message = f&#39;Please use doc_stride higher than {doc_stride} for this input&#39;</span>
+    <span class="c1">#    print(message)</span>
+    <span class="c1">#    return </span>
+
+    <span class="k">if</span> <span class="n">unique</span><span class="p">:</span>
+        <span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span> <span class="o">=</span> <span class="n">unique_vocabulary</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> 
+                                              <span class="n">embeddings</span><span class="p">,</span>
+                                              <span class="n">aggr_func</span><span class="p">,</span>
+                                              <span class="n">do_lower</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">filter_func</span><span class="p">:</span>
+        <span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span> <span class="o">=</span> <span class="n">filter_vocabulary</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> 
+                                              <span class="n">embeddings</span><span class="p">,</span>
+                                              <span class="n">filter_func</span><span class="p">)</span>
+
+
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;embeddings.tsv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-
     <span class="n">series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">series</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;embeddings.tsv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">series</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;vocab.tsv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="extract.filter_vocabulary">
+    <p>def <span class="ident">filter_vocabulary</span>(</p><p>vocab, embeddings, filter_func)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Filter vocabulary according to filter_func</p>
+<p>Args:<br />
+     vocab(list): embeddings vocabulary<br />
+     embeddings(list): embeddings vector<br />
+     filter_func (func): Filter vocabulary level function  </p>
+<p>Returns:<br />
+     vocab(list): filtered vocabulary<br />
+     embeddings(list): filtered embeddings vocabulary</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.filter_vocabulary', this);">Show source &equiv;</a></p>
+  <div id="source-extract.filter_vocabulary" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">filter_vocabulary</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">filter_func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Filter vocabulary according to filter_func</span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            vocab(list): embeddings vocabulary  </span>
+<span class="sd">            embeddings(list): embeddings vector  </span>
+<span class="sd">            filter_func (func): Filter vocabulary level function  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">            vocab(list): filtered vocabulary  </span>
+<span class="sd">            embeddings(list): filtered embeddings vocabulary  </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vocab_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">))</span> <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">vocab</span><span class="p">[</span><span class="n">idx</span><span class="p">])]</span>
+    <span class="n">selected_vocab</span> <span class="o">=</span> <span class="p">[</span><span class="n">vocab</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">vocab_idx</span><span class="p">]</span>
+    
+    <span class="c1">#embeddings = [embeddings[idx] for idx in vocab_idx]</span>
+    <span class="n">selected_embedding</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">vocab_idx</span><span class="p">:</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">selected_embedding</span> <span class="o">=</span> <span class="n">selected</span> <span class="k">if</span> <span class="n">selected_embedding</span> <span class="o">==</span> <span class="kc">None</span> \
+                             <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">selected_embedding</span><span class="p">,</span> <span class="n">selected</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">selected_vocab</span><span class="p">,</span> <span class="n">selected_embedding</span>
 </pre></div>
 
   </div>
@@ -1317,35 +1593,81 @@ Embbedings vectors are saved as embedding.tsv.</p>
 
     
   
-    <div class="desc"><p>Generate sentence embeddings vector  </p>
+    <div class="desc"><p>Generate sentence embeddings list  </p>
+<p>Sentences composed by more than one token, have tokens embbedings 
+ combined in one embbeding through aggr_func.  </p>
 <p>Args:<br />
      sentences (str): sentences list<br />
      tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer<br />
      model (transformers.AutoModel): HuggingFace Transformer Model<br />
-     aggr_func (func): Agreggation Function to form embedding  </p>
+     aggr_func (func): function to aggregate tensor embbedings  </p>
 <p>Returns:<br />
-     embeddings: sentences embeddings vector</p></div>
+     embeddings (torch.tensor): tokens embeddings tensor</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.form_sentence_embeddings', this);">Show source &equiv;</a></p>
   <div id="source-extract.form_sentence_embeddings" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">form_sentence_embeddings</span><span class="p">(</span><span class="n">sentences</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate sentence embeddings vector  </span>
+    <span class="sd">&quot;&quot;&quot;Generate sentence embeddings list  </span>
+
+<span class="sd">        Sentences composed by more than one token, have tokens embbedings </span>
+<span class="sd">        combined in one embbeding through aggr_func.  </span>
 
 <span class="sd">        Args:  </span>
 <span class="sd">            sentences (str): sentences list  </span>
 <span class="sd">            tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  </span>
 <span class="sd">            model (transformers.AutoModel): HuggingFace Transformer Model  </span>
-<span class="sd">            aggr_func (func): Agreggation Function to form embedding  </span>
+<span class="sd">            aggr_func (func): function to aggregate tensor embbedings  </span>
 <span class="sd">            </span>
 <span class="sd">       Returns:  </span>
-<span class="sd">            embeddings: sentences embeddings vector</span>
+<span class="sd">            embeddings (torch.tensor): tokens embeddings tensor</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">sentence_embeddings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">sentence_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">sentences</span><span class="p">:</span>
         <span class="n">token_embeddings</span> <span class="o">=</span> <span class="n">form_token_embeddings</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-        <span class="n">sentence_embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aggr_func</span><span class="p">(</span><span class="n">token_embeddings</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="n">sentence_embedding</span> <span class="o">=</span> <span class="n">aggr_func</span><span class="p">(</span><span class="n">token_embeddings</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">sentence_embeddings</span> <span class="o">=</span>  <span class="n">sentence_embedding</span> <span class="k">if</span> <span class="n">sentence_embeddings</span> <span class="o">==</span> <span class="kc">None</span> \
+                            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">sentence_embeddings</span><span class="p">,</span> <span class="n">sentence_embedding</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> 
+
 
     <span class="k">return</span>  <span class="n">sentence_embeddings</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="extract.form_sentence_vocab">
+    <p>def <span class="ident">form_sentence_vocab</span>(</p><p>text)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Separates text in sentences  </p>
+<p>Args:<br />
+     text (str): input text  </p>
+<p>Returns:<br />
+   sentences (list) : sentences list</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.form_sentence_vocab', this);">Show source &equiv;</a></p>
+  <div id="source-extract.form_sentence_vocab" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">form_sentence_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Separates text in sentences  </span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            text (str): input text  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">          sentences (list) : sentences list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;punkt&#39;</span><span class="p">)</span>
+
+    <span class="n">sentences</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sentences</span>
 </pre></div>
 
   </div>
@@ -1362,18 +1684,18 @@ Embbedings vectors are saved as embedding.tsv.</p>
 
     
   
-    <div class="desc"><p>Generate tokense embeddings vector</p>
+    <div class="desc"><p>Generate tokens embeddings list </p>
 <p>Args:<br />
      text (str): input text<br />
      tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer<br />
      model (transformers.AutoModel): HuggingFace Transformer Model  </p>
 <p>Returns:<br />
-     embeddings: tokens embeddings vector</p></div>
+     embeddings (torch.tensor): tokens embeddings tensor</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.form_token_embeddings', this);">Show source &equiv;</a></p>
   <div id="source-extract.form_token_embeddings" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">form_token_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate tokense embeddings vector</span>
+    <span class="sd">&quot;&quot;&quot;Generate tokens embeddings list </span>
 
 <span class="sd">        Args:  </span>
 <span class="sd">            text (str): input text  </span>
@@ -1381,12 +1703,51 @@ Embbedings vectors are saved as embedding.tsv.</p>
 <span class="sd">            model (transformers.AutoModel): HuggingFace Transformer Model  </span>
 
 <span class="sd">       Returns:  </span>
-<span class="sd">            embeddings: tokens embeddings vector</span>
+<span class="sd">            embeddings (torch.tensor): tokens embeddings tensor</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">encoded</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">add_special_tokens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">encoded</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="k">return</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">embeddings</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="extract.form_token_vocab">
+    <p>def <span class="ident">form_token_vocab</span>(</p><p>tokenizer, text)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Separates text in tokens  </p>
+<p>Args:<br />
+     text (str): input text<br />
+     tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  </p>
+<p>Returns:<br />
+   tokens (list) : tokens list</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.form_token_vocab', this);">Show source &equiv;</a></p>
+  <div id="source-extract.form_token_vocab" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">form_token_vocab</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Separates text in tokens  </span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            text (str): input text  </span>
+<span class="sd">            tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">          tokens (list) : tokens list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tokens</span>
 </pre></div>
 
   </div>
@@ -1403,7 +1764,9 @@ Embbedings vectors are saved as embedding.tsv.</p>
 
     
   
-    <div class="desc"><p>Generate tokense embeddings vector</p>
+    <div class="desc"><p>Generate tokens embeddings list  </p>
+<p>Words composed by more than one token, have tokens embbedings 
+ combined in one embbeding through aggr_func.</p>
 <p>Args:<br />
      text (str): input text<br />
      words (str): word list<br />
@@ -1411,12 +1774,15 @@ Embbedings vectors are saved as embedding.tsv.</p>
      model (transformers.AutoModel): HuggingFace Transformer Model<br />
      aggr_func (func): Agreggation Function to form embedding  </p>
 <p>Returns:<br />
-     embeddings: tokens embeddings vector</p></div>
+     embeddings (torch.tensor): tokens embeddings tensor</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.form_word_embeddings', this);">Show source &equiv;</a></p>
   <div id="source-extract.form_word_embeddings" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">form_word_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">words</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate tokense embeddings vector</span>
+    <span class="sd">&quot;&quot;&quot;Generate tokens embeddings list  </span>
+
+<span class="sd">        Words composed by more than one token, have tokens embbedings </span>
+<span class="sd">        combined in one embbeding through aggr_func.</span>
 
 <span class="sd">        Args:  </span>
 <span class="sd">            text (str): input text  </span>
@@ -1426,10 +1792,11 @@ Embbedings vectors are saved as embedding.tsv.</p>
 <span class="sd">            aggr_func (func): Agreggation Function to form embedding  </span>
 
 <span class="sd">       Returns:  </span>
-<span class="sd">            embeddings: tokens embeddings vector</span>
+<span class="sd">            embeddings (torch.tensor): tokens embeddings tensor</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">tokens</span><span class="p">,</span> <span class="n">token_embeddings</span> <span class="o">=</span> <span class="n">vocabulary_and_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s1">&#39;token&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">form_token_vocab</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">tokens_tensor</span> <span class="o">=</span> <span class="n">form_token_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
     <span class="n">token_idx</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">map_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
@@ -1447,13 +1814,134 @@ Embbedings vectors are saved as embedding.tsv.</p>
             <span class="n">map_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">word_idx</span><span class="p">)</span>
         <span class="n">token_idx</span> <span class="o">=</span> <span class="n">token_idx</span><span class="o">+</span><span class="mi">1</span>
 
-    <span class="n">word_embeddings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">map_idx</span><span class="p">:</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="n">token_embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-        <span class="n">word_embedding</span> <span class="o">=</span> <span class="n">token_embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span> \
-                         <span class="k">else</span> <span class="n">aggr_func</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">token</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="n">word_embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">word_embedding</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="n">word_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">mapping</span> <span class="ow">in</span> <span class="n">map_idx</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">word_embedding</span> <span class="o">=</span> <span class="n">tokens_tensor</span><span class="p">[</span><span class="n">mapping</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="c1">#[tokens_tensor[idx] for idx in mapping] for tensor#</span>
+            <span class="n">word_embedding</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span> 
+                <span class="n">token_tensor</span> <span class="o">=</span> <span class="n">tokens_tensor</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">word_embedding</span> <span class="o">=</span> <span class="n">token_tensor</span> <span class="k">if</span> <span class="n">word_embedding</span> <span class="o">==</span> <span class="kc">None</span> \
+                                 <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">word_embedding</span><span class="p">,</span> <span class="n">token_tensor</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+            
+            <span class="n">word_embedding</span> <span class="o">=</span> <span class="n">aggr_func</span><span class="p">(</span><span class="n">word_embedding</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;mapping should be list or int&#39;</span><span class="p">)</span>
+        <span class="n">word_embeddings</span> <span class="o">=</span> <span class="n">word_embedding</span> <span class="k">if</span> <span class="n">word_embeddings</span> <span class="o">==</span> <span class="kc">None</span> \
+                          <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">word_embeddings</span><span class="p">,</span> <span class="n">word_embedding</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> 
     <span class="k">return</span> <span class="n">word_embeddings</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="extract.form_word_vocab">
+    <p>def <span class="ident">form_word_vocab</span>(</p><p>text)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Separates text in words  </p>
+<p>Args:<br />
+     text (str): input text  </p>
+<p>Returns:<br />
+   words (list) : words list</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.form_word_vocab', this);">Show source &equiv;</a></p>
+  <div id="source-extract.form_word_vocab" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">form_word_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Separates text in words  </span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            text (str): input text  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">          words (list) : words list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;punkt&#39;</span><span class="p">)</span>
+
+    <span class="n">words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">words</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="extract.unique_vocabulary">
+    <p>def <span class="ident">unique_vocabulary</span>(</p><p>vocab, embeddings, aggr_func, do_lower)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Combined repeated terms into a unique term  </p>
+<p>Depends on segmentation level on vocab.
+If vocab is chopped in words, words will be considered.
+Hence, it is probably useless in sentences segmentation.</p>
+<p>Args:<br />
+      vocab(list): embeddings vocabulary<br />
+      embeddings(list): embeddings vector<br />
+      aggr_func (func): function to aggregate tensor embbedings<br />
+       do_lower (bool): whether considere cased  </p>
+<p>Returns:<br />
+      vocab(list): embeddings vocabulary with unique values<br />
+      embeddings(list): vocabulary embeddings</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.unique_vocabulary', this);">Show source &equiv;</a></p>
+  <div id="source-extract.unique_vocabulary" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">unique_vocabulary</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">,</span> <span class="n">do_lower</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Combined repeated terms into a unique term  </span>
+<span class="sd">    </span>
+<span class="sd">      Depends on segmentation level on vocab.</span>
+<span class="sd">      If vocab is chopped in words, words will be considered.</span>
+<span class="sd">      Hence, it is probably useless in sentences segmentation.</span>
+
+<span class="sd">        Args:  </span>
+<span class="sd">            vocab(list): embeddings vocabulary  </span>
+<span class="sd">            embeddings(list): embeddings vector  </span>
+<span class="sd">            aggr_func (func): function to aggregate tensor embbedings  </span>
+<span class="sd">             do_lower (bool): whether considere cased  </span>
+
+<span class="sd">       Returns:  </span>
+<span class="sd">            vocab(list): embeddings vocabulary with unique values  </span>
+<span class="sd">            embeddings(list): vocabulary embeddings  </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">unique_vocab</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">term</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">vocab</span><span class="p">]))</span> <span class="k">if</span> <span class="n">do_lower</span>\
+                    <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">vocab</span><span class="p">))</span> 
+    
+
+    <span class="n">compare</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">do_lower</span> \
+                    <span class="k">else</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
+
+    <span class="n">unique_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">unique_term</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_vocab</span><span class="p">):</span>
+
+        <span class="n">unique_embedding</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">compare</span><span class="p">(</span><span class="n">vocab</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span><span class="n">unique_term</span><span class="p">):</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+                <span class="n">unique_embedding</span> <span class="o">=</span> <span class="n">selected</span> <span class="k">if</span> <span class="n">unique_embedding</span> <span class="o">==</span> <span class="kc">None</span> \
+                                   <span class="k">else</span>  <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">unique_embedding</span><span class="p">,</span> <span class="n">selected</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">unique_embedding</span> <span class="o">=</span> <span class="n">aggr_func</span><span class="p">(</span><span class="n">unique_embedding</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">unique_embeddings</span> <span class="o">=</span> <span class="n">unique_embedding</span> <span class="k">if</span> <span class="n">unique_embeddings</span> <span class="o">==</span> <span class="kc">None</span> \
+                            <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">unique_embeddings</span><span class="p">,</span> <span class="n">unique_embedding</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">unique_vocab</span><span class="p">,</span> <span class="n">unique_embeddings</span>
 </pre></div>
 
   </div>
@@ -1471,45 +1959,47 @@ Embbedings vectors are saved as embedding.tsv.</p>
     
   
     <div class="desc"><p>Generate embeddings vector and vocabulary  </p>
+<p>Vocabulary is chopped according to level.
+ If needed, aggregation function is used.</p>
 <p>Args:<br />
      text (str): input text<br />
      tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer<br />
      model (transformers.AutoModel): HuggingFace Transformer Model<br />
      level (str): Segmentation level<br />
-     aggr_func (func): Agreggation Function  </p>
+     aggr_func (func): function to aggregate tensor embbedings  </p>
 <p>Returns:<br />
-     vocabulary: embeddings vocabulary<br />
-     embeddings: embeddings vector</p></div>
+     vocab (list): embeddings vocabulary
+     embeddings (list): embeddings</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-extract.vocabulary_and_embeddings', this);">Show source &equiv;</a></p>
   <div id="source-extract.vocabulary_and_embeddings" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">vocabulary_and_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Generate embeddings vector and vocabulary  </span>
 
+<span class="sd">        Vocabulary is chopped according to level.</span>
+<span class="sd">        If needed, aggregation function is used.</span>
+
 <span class="sd">        Args:  </span>
 <span class="sd">            text (str): input text  </span>
 <span class="sd">            tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  </span>
 <span class="sd">            model (transformers.AutoModel): HuggingFace Transformer Model  </span>
 <span class="sd">            level (str): Segmentation level  </span>
-<span class="sd">            aggr_func (func): Agreggation Function  </span>
+<span class="sd">            aggr_func (func): function to aggregate tensor embbedings  </span>
 
 <span class="sd">       Returns:  </span>
-<span class="sd">            vocabulary: embeddings vocabulary  </span>
-<span class="sd">            embeddings: embeddings vector</span>
+<span class="sd">            vocab (list): embeddings vocabulary</span>
+<span class="sd">            embeddings (list): embeddings</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;punkt&#39;</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;token&#39;</span><span class="p">:</span>
-        <span class="n">vocab</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">vocab</span> <span class="o">=</span> <span class="n">form_token_vocab</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="n">form_token_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;word&#39;</span><span class="p">:</span>
-        <span class="n">vocab</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">vocab</span> <span class="o">=</span> <span class="n">form_word_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="n">form_word_embeddings</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;sentenc&#39;</span><span class="p">:</span>
-        <span class="n">vocab</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;sentence&#39;</span><span class="p">:</span>
+        <span class="n">vocab</span> <span class="o">=</span> <span class="n">form_sentence_vocab</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="n">form_sentence_embeddings</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">aggr_func</span><span class="p">)</span>
-
 
     <span class="k">return</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">embeddings</span>
 </pre></div>
