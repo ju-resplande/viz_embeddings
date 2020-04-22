@@ -240,15 +240,15 @@ def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
     
 
     compare = lambda x, y: x.lower() == y.lower() if do_lower \
-                    else lambda x, y: x == y
+              else x == y
 
     unique_embeddings = None
-    for idx, unique_term in enumerate(unique_vocab):
+    for unique_term in unique_vocab:
 
         unique_embedding = None
         for idx in range(len(vocab)):
             if compare(vocab[idx],unique_term):
-                selected = embeddings[idx].unsqueeze(0)
+                selected = embeddings[idx].unsqueeze(0)              
 
                 unique_embedding = selected if unique_embedding == None \
                                    else  torch.cat((unique_embedding, selected), 0)
@@ -326,7 +326,6 @@ def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean, filte
 
     df = pd.DataFrame(embeddings)
     series = pd.Series(vocab)
-
     assert df.shape[0] == series.size
 
     df.to_csv('embeddings.tsv', index=None, sep='\t', header=None)

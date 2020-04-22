@@ -1330,15 +1330,15 @@ Embbedings vectors are saved as embedding.tsv.</p>
     
 
     <span class="n">compare</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">do_lower</span> \
-                    <span class="k">else</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
+              <span class="k">else</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
 
     <span class="n">unique_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">unique_term</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_vocab</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">unique_term</span> <span class="ow">in</span> <span class="n">unique_vocab</span><span class="p">:</span>
 
         <span class="n">unique_embedding</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)):</span>
             <span class="k">if</span> <span class="n">compare</span><span class="p">(</span><span class="n">vocab</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span><span class="n">unique_term</span><span class="p">):</span>
-                <span class="n">selected</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>              
 
                 <span class="n">unique_embedding</span> <span class="o">=</span> <span class="n">selected</span> <span class="k">if</span> <span class="n">unique_embedding</span> <span class="o">==</span> <span class="kc">None</span> \
                                    <span class="k">else</span>  <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">unique_embedding</span><span class="p">,</span> <span class="n">selected</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
@@ -1416,7 +1416,6 @@ Embbedings vectors are saved as embedding.tsv.</p>
 
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
     <span class="n">series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span>
-
     <span class="k">assert</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">series</span><span class="o">.</span><span class="n">size</span>
 
     <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;embeddings.tsv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -1433,7 +1432,7 @@ Embbedings vectors are saved as embedding.tsv.</p>
       
   <div class="item">
     <div class="name def" id="extract.extract_embeddings">
-    <p>def <span class="ident">extract_embeddings</span>(</p><p>text, model_name, level_name, aggr_func=&lt;built-in method mean of type object at 0x7f75a0c72b20&gt;, filter_func=&lt;function &lt;lambda&gt; at 0x7f75412c5200&gt;, unique=True, doc_stride=1, do_lower=False)</p>
+    <p>def <span class="ident">extract_embeddings</span>(</p><p>text, model_name, level_name, aggr_func=&lt;built-in method mean of type object at 0x7f48002e0b20&gt;, filter_func=&lt;function &lt;lambda&gt; at 0x7f47a0934170&gt;, unique=True, doc_stride=1, do_lower=False)</p>
     </div>
     
 
@@ -1521,7 +1520,6 @@ Embbedings vectors are saved as embedding.tsv.</p>
 
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
     <span class="n">series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span>
-
     <span class="k">assert</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">series</span><span class="o">.</span><span class="n">size</span>
 
     <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;embeddings.tsv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -1923,15 +1921,15 @@ Hence, it is probably useless in sentences segmentation.</p>
     
 
     <span class="n">compare</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">do_lower</span> \
-                    <span class="k">else</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
+              <span class="k">else</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
 
     <span class="n">unique_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">unique_term</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_vocab</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">unique_term</span> <span class="ow">in</span> <span class="n">unique_vocab</span><span class="p">:</span>
 
         <span class="n">unique_embedding</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)):</span>
             <span class="k">if</span> <span class="n">compare</span><span class="p">(</span><span class="n">vocab</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span><span class="n">unique_term</span><span class="p">):</span>
-                <span class="n">selected</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>              
 
                 <span class="n">unique_embedding</span> <span class="o">=</span> <span class="n">selected</span> <span class="k">if</span> <span class="n">unique_embedding</span> <span class="o">==</span> <span class="kc">None</span> \
                                    <span class="k">else</span>  <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">unique_embedding</span><span class="p">,</span> <span class="n">selected</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
