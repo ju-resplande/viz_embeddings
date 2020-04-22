@@ -135,7 +135,7 @@ def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean):
         Args:  
             text (str): input text  
             model_name (str): Hugging Face model name  
-            level_name (str): Hugging Face model  
+            level_name (str): Text segmentation level name
             aggr_func (func): Agreggation Function  
 
        Raises:  
