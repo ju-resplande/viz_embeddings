@@ -69,10 +69,14 @@ def form_word_embeddings(text, words, tokenizer, model, aggr_func):
         token_idx = token_idx+1
 
     word_embeddings = list()
-    for idx in map_idx:
-        token = token_embeddings[idx]
-        word_embedding = token_embeddings[idx] if isinstance(idx) == int \
-                         else aggr_func(torch.stack(token), 0)
+    for mapping in map_idx:
+        if isinstance(mapping, int):
+            word_embedding = token_embeddings[mapping]
+        elif isinstance(mapping, list):
+            word_embedding = [token_embeddings[idx] for idx in mapping]
+            word_embedding = aggr_func(torch.stack(word_embedding), 0)
+        else:
+            raise TypeError('mapping should be list or int')
         word_embeddings.append(word_embedding.tolist())
     return word_embeddings
 
@@ -118,7 +122,7 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
     elif level == 'word':
         vocab = nltk.word_tokenize(text)
         embeddings = form_word_embeddings(text, vocab, tokenizer, model, aggr_func)
-    elif level == 'sentenc':
+    elif level == 'sentence':
         vocab = nltk.sent_tokenize(text)
         embeddings = form_sentence_embeddings(vocab, tokenizer, model, aggr_func)
 
@@ -142,7 +146,7 @@ def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean):
             ValueError: f'There is no {level_name} segmentation.'
     """
 
-    if level_name not in Level:
+    if level_name not in Level._member_names_:
         raise ValueError(f'There is no {level_name} segmentation.')
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -151,7 +155,9 @@ def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean):
     vocab, embeddings = vocabulary_and_embeddings(text, tokenizer, model, level_name, aggr_func)
 
     df = pd.DataFrame(embeddings)
+    print(df.shape)
     df.to_csv('embeddings.tsv', index=None, sep='\t', header=None)
 
     series = pd.Series(vocab)
+    print(series.size)
     series.to_csv('vocab.tsv', index=None, sep='\n', header=None)
