@@ -19,23 +19,23 @@ Using pip :
     ``` python
     from extract import extract_embeddings
     
-    extract_embeddings(text, model_name, level)
+    extract_embeddings(text, model_name, level_name, aggr_func=torch.mean, filter_func=lambda x: len(x) >= 3, unique = True, doc_stride=1, do_lower=False)
     ```
-
-    - text: string
+    Args:
     
-      Input text
-
-    - model_name: string
+    text (str): input text
     
-      HuggingFace model name
-
-    - level: string
-
-      Represents the segmentation level. Options: 'word', 'token', 'sentence'
-
-
-  Pytorch functions to agreggate tokens embedding vectors to form word or sentence. 
+    model_name (str): Hugging Face model name
+    
+    level_name (str): text segmentation level name
+    
+    aggr_func (func): function to aggregate tensor embbedings
+    
+    filter_func (func): filter vocabulary level function
+    
+    unique (bool): if terms on level_name should be unique
+    
+    do_lower (bool): when unique = True, whether considere cased
   
  2. View or Publish 
 
