@@ -296,19 +296,20 @@ def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean, filte
     embeddings = list()
 
     embeddings = None
-    for doc in doc_lst:
-        doc_vocab, doc_embeddings = vocabulary_and_embeddings(doc, 
-                                                            tokenizer, 
-                                                            model, 
-                                                            level_name, 
-                                                            aggr_func)
-        vocab.extend(doc_vocab)
-        embeddings = doc_embeddings if embeddings == None \
-                    else torch.cat((embeddings, doc_embeddings), 0)
-    #except RuntimeError:
-    #    message = f'Please use doc_stride higher than {doc_stride} for this input'
-    #    print(message)
-    #    return 
+    try:
+        for doc in doc_lst:
+            doc_vocab, doc_embeddings = vocabulary_and_embeddings(doc, 
+                                                                tokenizer, 
+                                                                model, 
+                                                                level_name, 
+                                                                aggr_func)
+            vocab.extend(doc_vocab)
+            embeddings = doc_embeddings if embeddings == None \
+                        else torch.cat((embeddings, doc_embeddings), 0)
+    except RuntimeError:
+        message = f'Please use doc_stride higher than {doc_stride} for this input'
+        print(message)
+        return 
 
     if unique:
         vocab, embeddings = unique_vocabulary(vocab, 
@@ -330,3 +331,4 @@ def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean, filte
 
     df.to_csv('embeddings.tsv', index=None, sep='\t', header=None)
     series.to_csv('vocab.tsv', index=None, sep='\n', header=None)
+
