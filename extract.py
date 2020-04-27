@@ -1,6 +1,5 @@
-"""Extractor for TensorFlow Embbeding Projector  
+"""Embeddings extration to files
 
-Embbeding are extracted from text using HuggingFace Transformers.
 """
 
 from enum import Enum
