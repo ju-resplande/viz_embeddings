@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.8.1" />
 <title>viz_embeddings.extract API documentation</title>
-<meta name="description" content="Embeddings extration to files" />
+<meta name="description" content="Embeddings extraction to files" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
@@ -20,12 +20,12 @@
 <h1 class="title">Module <code>viz_embeddings.extract</code></h1>
 </header>
 <section id="section-intro">
-<p>Embeddings extration to files</p>
+<p>Embeddings extraction to files</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#34;&#34;&#34;Embeddings extration to files
+<pre><code class="python">&#34;&#34;&#34;Embeddings extraction to files
 
 &#34;&#34;&#34;
 
@@ -38,7 +38,7 @@ import nltk
 import torch
 
 class Level(Enum):
-    &#34;&#34;&#34; Input text segmentation levels
+    &#34;&#34;&#34; Input text segmentation levels.
     &#34;&#34;&#34;
 
     token = 1
@@ -46,7 +46,7 @@ class Level(Enum):
     sentence = 3
 
 def form_token_vocab(tokenizer, text):
-    &#34;&#34;&#34;Separates text in tokens  
+    &#34;&#34;&#34;Separate text in tokens.  
 
         Args:  
             text (str): input text  
@@ -60,7 +60,7 @@ def form_token_vocab(tokenizer, text):
     return tokens
 
 def form_word_vocab(text):
-    &#34;&#34;&#34;Separates text in words  
+    &#34;&#34;&#34;Separate text in words.  
 
         Args:  
             text (str): input text  
@@ -75,7 +75,7 @@ def form_word_vocab(text):
     return words
 
 def form_sentence_vocab(text):
-    &#34;&#34;&#34;Separates text in sentences  
+    &#34;&#34;&#34;Separate text in sentences.  
 
         Args:  
             text (str): input text  
@@ -90,7 +90,7 @@ def form_sentence_vocab(text):
     return sentences
 
 def form_token_embeddings(text, tokenizer, model):
-    &#34;&#34;&#34;Generate tokens embeddings list 
+    &#34;&#34;&#34;Generate tokens embeddings list.  
 
         Args:  
             text (str): input text  
@@ -108,10 +108,10 @@ def form_token_embeddings(text, tokenizer, model):
 
 
 def form_word_embeddings(text, words, tokenizer, model, aggr_func):
-    &#34;&#34;&#34;Generate tokens embeddings list  
+    &#34;&#34;&#34;Generate tokens embeddings list.  
 
-        Words composed by more than one token, have tokens embbedings 
-        combined in one embbeding through aggr_func.
+        Words composed by more than one token, have tokens embeddings 
+        combined in one embedding through aggr_func.
 
         Args:  
             text (str): input text  
@@ -163,16 +163,16 @@ def form_word_embeddings(text, words, tokenizer, model, aggr_func):
     return word_embeddings
 
 def form_sentence_embeddings(sentences, tokenizer, model, aggr_func):
-    &#34;&#34;&#34;Generate sentence embeddings list  
+    &#34;&#34;&#34;Generate sentence embeddings list.  
 
-        Sentences composed by more than one token, have tokens embbedings 
-        combined in one embbeding through aggr_func.  
+        Sentences composed by more than one token, have tokens embeddings 
+        combined in one embedding through aggr_func.  
 
         Args:  
             sentences (str): sentences list  
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): function to aggregate tensor embeddings  
             
        Returns:  
             embeddings (torch.tensor): tokens embeddings tensor
@@ -198,7 +198,7 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
             level (str): Segmentation level  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): function to aggregate tensor embeddings  
 
        Returns:  
             vocab (list): embeddings vocabulary
@@ -218,7 +218,7 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
     return vocab, embeddings
 
 def filter_vocabulary(vocab, embeddings, filter_func):
-    &#34;&#34;&#34;Filter vocabulary according to filter_func
+    &#34;&#34;&#34;Filter vocabulary according to filter_func.  
 
         Args:  
             vocab(list): embeddings vocabulary  
@@ -243,7 +243,7 @@ def filter_vocabulary(vocab, embeddings, filter_func):
     return selected_vocab, selected_embedding
 
 def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
-    &#34;&#34;&#34;Combined repeated terms into a unique term  
+    &#34;&#34;&#34;Combine repeated terms into a unique term.  
     
       Depends on segmentation level on vocab.
       If vocab is chopped in words, words will be considered.
@@ -252,7 +252,7 @@ def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
         Args:  
             vocab(list): embeddings vocabulary  
             embeddings(list): embeddings vector  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): torch function to aggregate tensor embeddings  
              do_lower (bool): whether considere cased  
 
        Returns:  
@@ -285,18 +285,19 @@ def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
     return unique_vocab, unique_embeddings
 
 def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file, aggr_func=torch.mean, filter_func=lambda x: len(x) &gt;= 3, unique = True, doc_stride=1, do_lower=False):
-    &#34;&#34;&#34;Extract embeddings from text using Hugging Face model  
-            
+    &#34;&#34;&#34;Extract embeddings from text using Hugging Face model.  
+
         Args:  
             text (str): input text  
             model_name (str): Hugging Face model name  
-            level_name (str): text segmentation level name
-            embeddings_file (str): file to save embeddings
-            vocab_file (str): file to save vocabulary
-            aggr_func (func): function to aggregate tensor embbedings  
-            filter_func (func): filter vocabulary level function  
-            unique (bool): if terms on level_name should be unique  
-            do_lower (bool): when unique = True, whether considere cased
+            level_name (str): text segmentation level name  
+            embeddings_file (str): file to save embeddings  
+            vocab_file (str): file to save vocabulary  
+            aggr_func (func): torch function to aggregate tensor embeddings Default: torch.mean  
+            filter_func (func): filter vocabulary level function. Default: lambda x: len(x) &gt;= 3  
+            unique (bool): if terms on level_name should be unique. Default: True  
+            doc_stride(int): number of segments to generate on level_name. Default: 1  
+            do_lower (bool): when unique = True, whether considere cased. Default: False
 
 
        Raises:  
@@ -366,18 +367,19 @@ def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file
 <span>def <span class="ident">extract_embeddings</span></span>(<span>text, model_name, level_name, embeddings_file, vocab_file, aggr_func=&lt;built-in method mean of type object&gt;, filter_func=&lt;function &lt;lambda&gt;&gt;, unique=True, doc_stride=1, do_lower=False)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Extract embeddings from text using Hugging Face model
+<div class="desc"><p>Extract embeddings from text using Hugging Face model.
 </p>
 <p>Args:<br>
 text (str): input text<br>
 model_name (str): Hugging Face model name<br>
-level_name (str): text segmentation level name
-embeddings_file (str): file to save embeddings
-vocab_file (str): file to save vocabulary
-aggr_func (func): function to aggregate tensor embbedings<br>
-filter_func (func): filter vocabulary level function<br>
-unique (bool): if terms on level_name should be unique<br>
-do_lower (bool): when unique = True, whether considere cased</p>
+level_name (str): text segmentation level name<br>
+embeddings_file (str): file to save embeddings<br>
+vocab_file (str): file to save vocabulary<br>
+aggr_func (func): torch function to aggregate tensor embeddings Default: torch.mean<br>
+filter_func (func): filter vocabulary level function. Default: lambda x: len(x) &gt;= 3<br>
+unique (bool): if terms on level_name should be unique. Default: True<br>
+doc_stride(int): number of segments to generate on level_name. Default: 1<br>
+do_lower (bool): when unique = True, whether considere cased. Default: False</p>
 <p>Raises:<br>
 ValueError: f'There is no {level_name} segmentation.'</p></div>
 <details class="source">
@@ -385,18 +387,19 @@ ValueError: f'There is no {level_name} segmentation.'</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file, aggr_func=torch.mean, filter_func=lambda x: len(x) &gt;= 3, unique = True, doc_stride=1, do_lower=False):
-    &#34;&#34;&#34;Extract embeddings from text using Hugging Face model  
-            
+    &#34;&#34;&#34;Extract embeddings from text using Hugging Face model.  
+
         Args:  
             text (str): input text  
             model_name (str): Hugging Face model name  
-            level_name (str): text segmentation level name
-            embeddings_file (str): file to save embeddings
-            vocab_file (str): file to save vocabulary
-            aggr_func (func): function to aggregate tensor embbedings  
-            filter_func (func): filter vocabulary level function  
-            unique (bool): if terms on level_name should be unique  
-            do_lower (bool): when unique = True, whether considere cased
+            level_name (str): text segmentation level name  
+            embeddings_file (str): file to save embeddings  
+            vocab_file (str): file to save vocabulary  
+            aggr_func (func): torch function to aggregate tensor embeddings Default: torch.mean  
+            filter_func (func): filter vocabulary level function. Default: lambda x: len(x) &gt;= 3  
+            unique (bool): if terms on level_name should be unique. Default: True  
+            doc_stride(int): number of segments to generate on level_name. Default: 1  
+            do_lower (bool): when unique = True, whether considere cased. Default: False
 
 
        Raises:  
@@ -459,7 +462,8 @@ ValueError: f'There is no {level_name} segmentation.'</p></div>
 <span>def <span class="ident">filter_vocabulary</span></span>(<span>vocab, embeddings, filter_func)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Filter vocabulary according to filter_func</p>
+<div class="desc"><p>Filter vocabulary according to filter_func.
+</p>
 <p>Args:<br>
 vocab(list): embeddings vocabulary<br>
 embeddings(list): embeddings vector<br>
@@ -473,7 +477,7 @@ embeddings(list): filtered embeddings vocabulary</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def filter_vocabulary(vocab, embeddings, filter_func):
-    &#34;&#34;&#34;Filter vocabulary according to filter_func
+    &#34;&#34;&#34;Filter vocabulary according to filter_func.  
 
         Args:  
             vocab(list): embeddings vocabulary  
@@ -502,16 +506,16 @@ embeddings(list): filtered embeddings vocabulary</p></div>
 <span>def <span class="ident">form_sentence_embeddings</span></span>(<span>sentences, tokenizer, model, aggr_func)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Generate sentence embeddings list
+<div class="desc"><p>Generate sentence embeddings list.
 </p>
-<p>Sentences composed by more than one token, have tokens embbedings
-combined in one embbeding through aggr_func.
+<p>Sentences composed by more than one token, have tokens embeddings
+combined in one embedding through aggr_func.
 </p>
 <p>Args:<br>
 sentences (str): sentences list<br>
 tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer<br>
 model (transformers.AutoModel): HuggingFace Transformer Model<br>
-aggr_func (func): function to aggregate tensor embbedings
+aggr_func (func): function to aggregate tensor embeddings
 </p>
 <p>Returns:<br>
 embeddings (torch.tensor): tokens embeddings tensor</p></div>
@@ -520,16 +524,16 @@ embeddings (torch.tensor): tokens embeddings tensor</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def form_sentence_embeddings(sentences, tokenizer, model, aggr_func):
-    &#34;&#34;&#34;Generate sentence embeddings list  
+    &#34;&#34;&#34;Generate sentence embeddings list.  
 
-        Sentences composed by more than one token, have tokens embbedings 
-        combined in one embbeding through aggr_func.  
+        Sentences composed by more than one token, have tokens embeddings 
+        combined in one embedding through aggr_func.  
 
         Args:  
             sentences (str): sentences list  
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): function to aggregate tensor embeddings  
             
        Returns:  
             embeddings (torch.tensor): tokens embeddings tensor
@@ -549,7 +553,7 @@ embeddings (torch.tensor): tokens embeddings tensor</p></div>
 <span>def <span class="ident">form_sentence_vocab</span></span>(<span>text)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Separates text in sentences
+<div class="desc"><p>Separate text in sentences.
 </p>
 <p>Args:<br>
 text (str): input text
@@ -561,7 +565,7 @@ sentences (list) : sentences list</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def form_sentence_vocab(text):
-    &#34;&#34;&#34;Separates text in sentences  
+    &#34;&#34;&#34;Separate text in sentences.  
 
         Args:  
             text (str): input text  
@@ -580,7 +584,8 @@ sentences (list) : sentences list</p></div>
 <span>def <span class="ident">form_token_embeddings</span></span>(<span>text, tokenizer, model)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Generate tokens embeddings list </p>
+<div class="desc"><p>Generate tokens embeddings list.
+</p>
 <p>Args:<br>
 text (str): input text<br>
 tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer<br>
@@ -593,7 +598,7 @@ embeddings (torch.tensor): tokens embeddings tensor</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def form_token_embeddings(text, tokenizer, model):
-    &#34;&#34;&#34;Generate tokens embeddings list 
+    &#34;&#34;&#34;Generate tokens embeddings list.  
 
         Args:  
             text (str): input text  
@@ -614,7 +619,7 @@ embeddings (torch.tensor): tokens embeddings tensor</p></div>
 <span>def <span class="ident">form_token_vocab</span></span>(<span>tokenizer, text)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Separates text in tokens
+<div class="desc"><p>Separate text in tokens.
 </p>
 <p>Args:<br>
 text (str): input text<br>
@@ -627,7 +632,7 @@ tokens (list) : tokens list</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def form_token_vocab(tokenizer, text):
-    &#34;&#34;&#34;Separates text in tokens  
+    &#34;&#34;&#34;Separate text in tokens.  
 
         Args:  
             text (str): input text  
@@ -645,10 +650,10 @@ tokens (list) : tokens list</p></div>
 <span>def <span class="ident">form_word_embeddings</span></span>(<span>text, words, tokenizer, model, aggr_func)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Generate tokens embeddings list
+<div class="desc"><p>Generate tokens embeddings list.
 </p>
-<p>Words composed by more than one token, have tokens embbedings
-combined in one embbeding through aggr_func.</p>
+<p>Words composed by more than one token, have tokens embeddings
+combined in one embedding through aggr_func.</p>
 <p>Args:<br>
 text (str): input text<br>
 words (str): word list<br>
@@ -663,10 +668,10 @@ embeddings (torch.tensor): tokens embeddings tensor</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def form_word_embeddings(text, words, tokenizer, model, aggr_func):
-    &#34;&#34;&#34;Generate tokens embeddings list  
+    &#34;&#34;&#34;Generate tokens embeddings list.  
 
-        Words composed by more than one token, have tokens embbedings 
-        combined in one embbeding through aggr_func.
+        Words composed by more than one token, have tokens embeddings 
+        combined in one embedding through aggr_func.
 
         Args:  
             text (str): input text  
@@ -722,7 +727,7 @@ embeddings (torch.tensor): tokens embeddings tensor</p></div>
 <span>def <span class="ident">form_word_vocab</span></span>(<span>text)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Separates text in words
+<div class="desc"><p>Separate text in words.
 </p>
 <p>Args:<br>
 text (str): input text
@@ -734,7 +739,7 @@ words (list) : words list</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def form_word_vocab(text):
-    &#34;&#34;&#34;Separates text in words  
+    &#34;&#34;&#34;Separate text in words.  
 
         Args:  
             text (str): input text  
@@ -753,7 +758,7 @@ words (list) : words list</p></div>
 <span>def <span class="ident">unique_vocabulary</span></span>(<span>vocab, embeddings, aggr_func, do_lower)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Combined repeated terms into a unique term
+<div class="desc"><p>Combine repeated terms into a unique term.
 </p>
 <p>Depends on segmentation level on vocab.
 If vocab is chopped in words, words will be considered.
@@ -761,7 +766,7 @@ Hence, it is probably useless in sentences segmentation.</p>
 <p>Args:<br>
 vocab(list): embeddings vocabulary<br>
 embeddings(list): embeddings vector<br>
-aggr_func (func): function to aggregate tensor embbedings<br>
+aggr_func (func): torch function to aggregate tensor embeddings<br>
 do_lower (bool): whether considere cased
 </p>
 <p>Returns:<br>
@@ -772,7 +777,7 @@ embeddings(list): vocabulary embeddings</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
-    &#34;&#34;&#34;Combined repeated terms into a unique term  
+    &#34;&#34;&#34;Combine repeated terms into a unique term.  
     
       Depends on segmentation level on vocab.
       If vocab is chopped in words, words will be considered.
@@ -781,7 +786,7 @@ embeddings(list): vocabulary embeddings</p></div>
         Args:  
             vocab(list): embeddings vocabulary  
             embeddings(list): embeddings vector  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): torch function to aggregate tensor embeddings  
              do_lower (bool): whether considere cased  
 
        Returns:  
@@ -827,7 +832,7 @@ text (str): input text<br>
 tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer<br>
 model (transformers.AutoModel): HuggingFace Transformer Model<br>
 level (str): Segmentation level<br>
-aggr_func (func): function to aggregate tensor embbedings
+aggr_func (func): function to aggregate tensor embeddings
 </p>
 <p>Returns:<br>
 vocab (list): embeddings vocabulary
@@ -847,7 +852,7 @@ embeddings (list): embeddings</p></div>
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
             level (str): Segmentation level  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): function to aggregate tensor embeddings  
 
        Returns:  
             vocab (list): embeddings vocabulary
@@ -877,13 +882,13 @@ embeddings (list): embeddings</p></div>
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Input text segmentation levels</p></div>
+<div class="desc"><p>Input text segmentation levels.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Level(Enum):
-    &#34;&#34;&#34; Input text segmentation levels
+    &#34;&#34;&#34; Input text segmentation levels.
     &#34;&#34;&#34;
 
     token = 1

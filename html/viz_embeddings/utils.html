@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.8.1" />
-<title>viz_embeddings API documentation</title>
+<title>viz_embeddings.utils API documentation</title>
 <meta name="description" content="" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
@@ -17,30 +17,72 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Namespace <code>viz_embeddings</code></h1>
+<h1 class="title">Module <code>viz_embeddings.utils</code></h1>
 </header>
 <section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from subprocess import run
+
+def copy_to_s3(filename, bucket_name):
+    &#34;&#34;&#34;Copy file to AWS S3 bucket.  
+
+    Args:  
+        filename (str): file name to copy to S3  
+        bucket_name (str): AWS S3 bucket name  
+    &#34;&#34;&#34;
+    cmds = [&#39;aws&#39;,
+            &#39;s3&#39;,
+            &#39;cp&#39;,
+            filename,
+            f&#39;s3://{bucket_name}/&#39;,
+            &#39;--grants&#39;,
+            &#39;read=uri=http://acs.amazonaws.com/groups/global/AllUsers&#39;,
+            ]
+    run(cmds)</code></pre>
+</details>
 </section>
 <section>
-<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt><code class="name"><a title="viz_embeddings.embeddings" href="embeddings.html">viz_embeddings.embeddings</a></code></dt>
+<dt id="viz_embeddings.utils.copy_to_s3"><code class="name flex">
+<span>def <span class="ident">copy_to_s3</span></span>(<span>filename, bucket_name)</span>
+</code></dt>
 <dd>
-<div class="desc"><p>Embeddings manipulations</p></div>
-</dd>
-<dt><code class="name"><a title="viz_embeddings.extract" href="extract.html">viz_embeddings.extract</a></code></dt>
-<dd>
-<div class="desc"><p>Embeddings extraction to files</p></div>
-</dd>
-<dt><code class="name"><a title="viz_embeddings.utils" href="utils.html">viz_embeddings.utils</a></code></dt>
-<dd>
-<div class="desc"></div>
+<div class="desc"><p>Copy file to AWS S3 bucket.
+</p>
+<p>Args:<br>
+filename (str): file name to copy to S3<br>
+bucket_name (str): AWS S3 bucket name</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def copy_to_s3(filename, bucket_name):
+    &#34;&#34;&#34;Copy file to AWS S3 bucket.  
+
+    Args:  
+        filename (str): file name to copy to S3  
+        bucket_name (str): AWS S3 bucket name  
+    &#34;&#34;&#34;
+    cmds = [&#39;aws&#39;,
+            &#39;s3&#39;,
+            &#39;cp&#39;,
+            filename,
+            f&#39;s3://{bucket_name}/&#39;,
+            &#39;--grants&#39;,
+            &#39;read=uri=http://acs.amazonaws.com/groups/global/AllUsers&#39;,
+            ]
+    run(cmds)</code></pre>
+</details>
 </dd>
 </dl>
-</section>
-<section>
-</section>
-<section>
 </section>
 <section>
 </section>
@@ -51,11 +93,14 @@
 <ul></ul>
 </div>
 <ul id="index">
-<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<li><h3>Super-module</h3>
 <ul>
-<li><code><a title="viz_embeddings.embeddings" href="embeddings.html">viz_embeddings.embeddings</a></code></li>
-<li><code><a title="viz_embeddings.extract" href="extract.html">viz_embeddings.extract</a></code></li>
-<li><code><a title="viz_embeddings.utils" href="utils.html">viz_embeddings.utils</a></code></li>
+<li><code><a title="viz_embeddings" href="index.html">viz_embeddings</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="viz_embeddings.utils.copy_to_s3" href="#viz_embeddings.utils.copy_to_s3">copy_to_s3</a></code></li>
 </ul>
 </li>
 </ul>

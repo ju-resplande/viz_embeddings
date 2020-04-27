@@ -1,4 +1,4 @@
-"""Embeddings extration to files
+"""Embeddings extraction to files
 
 """
 
@@ -11,7 +11,7 @@ import nltk
 import torch
 
 class Level(Enum):
-    """ Input text segmentation levels
+    """ Input text segmentation levels.
     """
 
     token = 1
@@ -19,7 +19,7 @@ class Level(Enum):
     sentence = 3
 
 def form_token_vocab(tokenizer, text):
-    """Separates text in tokens  
+    """Separate text in tokens.  
 
         Args:  
             text (str): input text  
@@ -33,7 +33,7 @@ def form_token_vocab(tokenizer, text):
     return tokens
 
 def form_word_vocab(text):
-    """Separates text in words  
+    """Separate text in words.  
 
         Args:  
             text (str): input text  
@@ -48,7 +48,7 @@ def form_word_vocab(text):
     return words
 
 def form_sentence_vocab(text):
-    """Separates text in sentences  
+    """Separate text in sentences.  
 
         Args:  
             text (str): input text  
@@ -63,7 +63,7 @@ def form_sentence_vocab(text):
     return sentences
 
 def form_token_embeddings(text, tokenizer, model):
-    """Generate tokens embeddings list 
+    """Generate tokens embeddings list.  
 
         Args:  
             text (str): input text  
@@ -81,10 +81,10 @@ def form_token_embeddings(text, tokenizer, model):
 
 
 def form_word_embeddings(text, words, tokenizer, model, aggr_func):
-    """Generate tokens embeddings list  
+    """Generate tokens embeddings list.  
 
-        Words composed by more than one token, have tokens embbedings 
-        combined in one embbeding through aggr_func.
+        Words composed by more than one token, have tokens embeddings 
+        combined in one embedding through aggr_func.
 
         Args:  
             text (str): input text  
@@ -136,16 +136,16 @@ def form_word_embeddings(text, words, tokenizer, model, aggr_func):
     return word_embeddings
 
 def form_sentence_embeddings(sentences, tokenizer, model, aggr_func):
-    """Generate sentence embeddings list  
+    """Generate sentence embeddings list.  
 
-        Sentences composed by more than one token, have tokens embbedings 
-        combined in one embbeding through aggr_func.  
+        Sentences composed by more than one token, have tokens embeddings 
+        combined in one embedding through aggr_func.  
 
         Args:  
             sentences (str): sentences list  
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): function to aggregate tensor embeddings  
             
        Returns:  
             embeddings (torch.tensor): tokens embeddings tensor
@@ -171,7 +171,7 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
             level (str): Segmentation level  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): function to aggregate tensor embeddings  
 
        Returns:  
             vocab (list): embeddings vocabulary
@@ -191,7 +191,7 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
     return vocab, embeddings
 
 def filter_vocabulary(vocab, embeddings, filter_func):
-    """Filter vocabulary according to filter_func
+    """Filter vocabulary according to filter_func.  
 
         Args:  
             vocab(list): embeddings vocabulary  
@@ -216,7 +216,7 @@ def filter_vocabulary(vocab, embeddings, filter_func):
     return selected_vocab, selected_embedding
 
 def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
-    """Combined repeated terms into a unique term  
+    """Combine repeated terms into a unique term.  
     
       Depends on segmentation level on vocab.
       If vocab is chopped in words, words will be considered.
@@ -225,7 +225,7 @@ def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
         Args:  
             vocab(list): embeddings vocabulary  
             embeddings(list): embeddings vector  
-            aggr_func (func): function to aggregate tensor embbedings  
+            aggr_func (func): torch function to aggregate tensor embeddings  
              do_lower (bool): whether considere cased  
 
        Returns:  
@@ -258,18 +258,19 @@ def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
     return unique_vocab, unique_embeddings
 
 def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file, aggr_func=torch.mean, filter_func=lambda x: len(x) >= 3, unique = True, doc_stride=1, do_lower=False):
-    """Extract embeddings from text using Hugging Face model  
-            
+    """Extract embeddings from text using Hugging Face model.  
+
         Args:  
             text (str): input text  
             model_name (str): Hugging Face model name  
-            level_name (str): text segmentation level name
-            embeddings_file (str): file to save embeddings
-            vocab_file (str): file to save vocabulary
-            aggr_func (func): function to aggregate tensor embbedings  
-            filter_func (func): filter vocabulary level function  
-            unique (bool): if terms on level_name should be unique  
-            do_lower (bool): when unique = True, whether considere cased
+            level_name (str): text segmentation level name  
+            embeddings_file (str): file to save embeddings  
+            vocab_file (str): file to save vocabulary  
+            aggr_func (func): torch function to aggregate tensor embeddings Default: torch.mean  
+            filter_func (func): filter vocabulary level function. Default: lambda x: len(x) >= 3  
+            unique (bool): if terms on level_name should be unique. Default: True  
+            doc_stride(int): number of segments to generate on level_name. Default: 1  
+            do_lower (bool): when unique = True, whether considere cased. Default: False
 
 
        Raises:  

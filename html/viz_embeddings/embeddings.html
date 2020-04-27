@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.8.1" />
 <title>viz_embeddings.embeddings API documentation</title>
-<meta name="description" content="Embbedings manipulations" />
+<meta name="description" content="Embeddings manipulations" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
@@ -20,21 +20,21 @@
 <h1 class="title">Module <code>viz_embeddings.embeddings</code></h1>
 </header>
 <section id="section-intro">
-<p>Embbedings manipulations</p>
+<p>Embeddings manipulations</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
-    Embbedings manipulations
+    Embeddings manipulations
 &#34;&#34;&#34;
 
 from os import path, remove
-from subprocess import run
 from copy import copy
 import json
 
 from extract  import extract_embeddings
+from utils import copy_to_s3
 
 data_folder = &#39;data&#39;
 
@@ -45,12 +45,12 @@ config_template = {&#34;tensorName&#34;: &#34;&#34;,
                    }
 
 
-def vocab_embedding_files(data_folder, name):
-    &#34;&#34;&#34;Saves vocabulary and embeddings files according to a pattern.  
+def embeddings_files(data_folder, name):
+    &#34;&#34;&#34;Save embeddings files according to a pattern.  
 
     Args:  
         data_folder (str): folder to storage embeddings  
-        name (str): user embbedings name  
+        name (str): user embeddings name  
     &#34;&#34;&#34;
     embeddings_file = f&#39;{data_folder}/{name}_embeddings.tsv&#39;
     vocab_file = f&#39;{data_folder}/{name}_vocab.tsv&#39;
@@ -59,20 +59,23 @@ def vocab_embedding_files(data_folder, name):
 
 
 def add_embeddings(name, text, model_name, level_name, **kwargs):
-    &#34;&#34;&#34;Create embeddings and vocabulary list files
+    &#34;&#34;&#34;Create embeddings and vocabulary list files.  
 
-    Choose name for the embbedings.  
+    Choose name for the embeddings.
     Files are created in data_folder and saved according to name.  
 
     Args:  
-        name (str): user embbedings name  
-       text (str): input text  
-            model_name (str): Hugging Face model name  
-            level_name (str): text segmentation level name  
+        name (str): user embeddings name  
+        text (str): input text  
+        model_name (str): Hugging Face model name  
+        level_name (str): text segmentation level name  
         **kwargs: extract_embeddings keyword arguments
+        
+    Raises:  
+       FileExistsError: f&#39;File {f} exists.&#39;
     &#34;&#34;&#34;
     embeddings_file, vocab_file = \
-        vocab_embedding_files(data_folder, name)
+        embeddings_files(data_folder, name)
 
     for f in [embeddings_file, vocab_file]:
         if path.exists(f):
@@ -83,75 +86,68 @@ def add_embeddings(name, text, model_name, level_name, **kwargs):
 
 
 def remove_embeddings(name):
-    &#34;&#34;&#34;Remove embbedings for data_folder.
+    &#34;&#34;&#34;Remove embeddings in data_folder.  
 
     Args:  
-        name (str): user embbedings name  
+        name (str): user embeddings name  
     &#34;&#34;&#34;
     embeddings_file, vocab_file = \
-        vocab_embedding_files(data_folder, name)
+        embeddings_files(data_folder, name)
 
     for f in [embeddings_file, vocab_file]:
         remove(f)
 
 
-def copy_to_s3(filename, bucket_s3):
-    &#34;&#34;&#34;Copy file to AWS S3 bu bucket  
-
-    Args:  
-        filename (str): file name to copy to S3  
-        bucket_s3 (str): AWS S3 bucket url  
-    &#34;&#34;&#34;
-    cmds = [&#39;aws&#39;, &#39;s3&#39;, &#39;cp&#39;, filename, f&#39;s3://{bucket_s3}/&#39;]
-    run(cmds)
-
-
-def vocab_embeddings_to_s3(bucket_s3, name):
-    &#34;&#34;&#34;Copy embeddings and vocabulaty files to AWS S3 bucket  
+def embeddings_to_s3(bucket_name, name):
+    &#34;&#34;&#34;Copy embeddings files to AWS S3 bucket.  
 
     Files are copied from data_folder and according to name.  
 
     Args:  
-        bucket_s3 (str): AWS S3 bucket url  
-        name (str): user embbedings name  
+        bucket_name (str): AWS S3 bucket name  
+        name (str): user embeddings name  
     &#34;&#34;&#34;
     embeddings_file, vocab_file = \
-        vocab_embedding_files(data_folder, name)
+        embeddings_files(data_folder, name)
 
-    copy_to_s3(embbedings_file, bucket_s3)
-    copy_to_s3(vocab_file, bucket_s3)
+    copy_to_s3(embeddings_file, bucket_name)
+    copy_to_s3(vocab_file, bucket_name)
 
 
-def set_config_file(bucket_s3, names, config_filename):
-    &#34;&#34;&#34;Set configuration file for publish in Tensorflow Embedding Projector.  
+def publish_embeddings(names, bucket_name, bucket_region, config_filename):
+    &#34;&#34;&#34;Publish selected embeddings in Tensorflow Embedding Projector.  
 
-    Selected embbedings are posted on AWS S3 bucket and their links are 
-    displayed in configuration file, which is used to create publising 
+    Prints publishing link.  
+    Selected embeddings are posted on AWS S3 bucket and their links are 
+    displayed in configuration file, which is used to create publishing 
     link.
 
     Args:  
-        bucket_s3 (str): AWS S3 bucket url  
-        name (lst): selected names  
+        names (list): selected names  
+        bucket_name (str): AWS S3 bucket name  
+        bucket_region(str): AWS S3 bucket region  
         config_filename (str): config filename  
     &#34;&#34;&#34;
     configs = {&#34;embeddings&#34;: list()}
+    bucket_link = &#39;https://{bucket_name}.s3.{bucket_region}.amazonaws.com/&#39;
 
     for name in names:
-        vocab_embeddings_to_s3(bucket_s3, name)
-        tensorPath = f&#39;s3://{bucket_s3}/{name}_embeddings.tsv&#39;
-        metadataPath = f&#39;s3://{bucket_s3}/{name}_vocab.tsv&#39;
+        embeddings_to_s3(bucket_name, name)
+        tensorPath = f&#39;{bucket_link}/{name}_embeddings.tsv&#39;
+        metadataPath = f&#39;{bucket_link}/{name}_vocab.tsv&#39;
 
         config = config_template.copy()
         config[&#39;tensorName&#39;] = name
         config[&#39;tensorPath&#39;] = tensorPath
         config[&#39;metadataPath&#39;] = metadataPath
+
         configs[&#39;embeddings&#39;].append(config)
 
     with open(&#39;config_filename&#39;, &#39;w&#39;) as f:
         json.dump(configs)
 
-    copy_to_s3(config_filename, bucket_s3)
-    config_url = &#39;s3://{bucket_s3}/{config_filename}&#39;
+    copy_to_s3(config_filename, bucket_name)
+    config_url = &#39;{bucket_link}/{config_filename}&#39;
     url = f&#39;http://projector.tensorflow.org/?config={config_url}&#39;
 
     print(url)</code></pre>
@@ -168,35 +164,41 @@ def set_config_file(bucket_s3, names, config_filename):
 <span>def <span class="ident">add_embeddings</span></span>(<span>name, text, model_name, level_name, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create embeddings and vocabulary list files</p>
-<p>Choose name for the embbedings.<br>
+<div class="desc"><p>Create embeddings and vocabulary list files.
+</p>
+<p>Choose name for the embeddings.
 Files are created in data_folder and saved according to name.
 </p>
 <p>Args:<br>
-name (str): user embbedings name<br>
+name (str): user embeddings name<br>
 text (str): input text<br>
 model_name (str): Hugging Face model name<br>
 level_name (str): text segmentation level name<br>
-**kwargs: extract_embeddings keyword arguments</p></div>
+**kwargs: extract_embeddings keyword arguments</p>
+<p>Raises:<br>
+FileExistsError: f'File {f} exists.'</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def add_embeddings(name, text, model_name, level_name, **kwargs):
-    &#34;&#34;&#34;Create embeddings and vocabulary list files
+    &#34;&#34;&#34;Create embeddings and vocabulary list files.  
 
-    Choose name for the embbedings.  
+    Choose name for the embeddings.
     Files are created in data_folder and saved according to name.  
 
     Args:  
-        name (str): user embbedings name  
-       text (str): input text  
-            model_name (str): Hugging Face model name  
-            level_name (str): text segmentation level name  
+        name (str): user embeddings name  
+        text (str): input text  
+        model_name (str): Hugging Face model name  
+        level_name (str): text segmentation level name  
         **kwargs: extract_embeddings keyword arguments
+        
+    Raises:  
+       FileExistsError: f&#39;File {f} exists.&#39;
     &#34;&#34;&#34;
     embeddings_file, vocab_file = \
-        vocab_embedding_files(data_folder, name)
+        embeddings_files(data_folder, name)
 
     for f in [embeddings_file, vocab_file]:
         if path.exists(f):
@@ -206,125 +208,25 @@ level_name (str): text segmentation level name<br>
                        embeddings_file, vocab_file, **kwargs)</code></pre>
 </details>
 </dd>
-<dt id="viz_embeddings.embeddings.copy_to_s3"><code class="name flex">
-<span>def <span class="ident">copy_to_s3</span></span>(<span>filename, bucket_s3)</span>
+<dt id="viz_embeddings.embeddings.embeddings_files"><code class="name flex">
+<span>def <span class="ident">embeddings_files</span></span>(<span>data_folder, name)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Copy file to AWS S3 bu bucket
-</p>
-<p>Args:<br>
-filename (str): file name to copy to S3<br>
-bucket_s3 (str): AWS S3 bucket url</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def copy_to_s3(filename, bucket_s3):
-    &#34;&#34;&#34;Copy file to AWS S3 bu bucket  
-
-    Args:  
-        filename (str): file name to copy to S3  
-        bucket_s3 (str): AWS S3 bucket url  
-    &#34;&#34;&#34;
-    cmds = [&#39;aws&#39;, &#39;s3&#39;, &#39;cp&#39;, filename, f&#39;s3://{bucket_s3}/&#39;]
-    run(cmds)</code></pre>
-</details>
-</dd>
-<dt id="viz_embeddings.embeddings.remove_embeddings"><code class="name flex">
-<span>def <span class="ident">remove_embeddings</span></span>(<span>name)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Remove embbedings for data_folder.</p>
-<p>Args:<br>
-name (str): user embbedings name</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def remove_embeddings(name):
-    &#34;&#34;&#34;Remove embbedings for data_folder.
-
-    Args:  
-        name (str): user embbedings name  
-    &#34;&#34;&#34;
-    embeddings_file, vocab_file = \
-        vocab_embedding_files(data_folder, name)
-
-    for f in [embeddings_file, vocab_file]:
-        remove(f)</code></pre>
-</details>
-</dd>
-<dt id="viz_embeddings.embeddings.set_config_file"><code class="name flex">
-<span>def <span class="ident">set_config_file</span></span>(<span>bucket_s3, names, config_filename)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Set configuration file for publish in Tensorflow Embedding Projector.
-</p>
-<p>Selected embbedings are posted on AWS S3 bucket and their links are
-displayed in configuration file, which is used to create publising
-link.</p>
-<p>Args:<br>
-bucket_s3 (str): AWS S3 bucket url<br>
-name (lst): selected names<br>
-config_filename (str): config filename</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def set_config_file(bucket_s3, names, config_filename):
-    &#34;&#34;&#34;Set configuration file for publish in Tensorflow Embedding Projector.  
-
-    Selected embbedings are posted on AWS S3 bucket and their links are 
-    displayed in configuration file, which is used to create publising 
-    link.
-
-    Args:  
-        bucket_s3 (str): AWS S3 bucket url  
-        name (lst): selected names  
-        config_filename (str): config filename  
-    &#34;&#34;&#34;
-    configs = {&#34;embeddings&#34;: list()}
-
-    for name in names:
-        vocab_embeddings_to_s3(bucket_s3, name)
-        tensorPath = f&#39;s3://{bucket_s3}/{name}_embeddings.tsv&#39;
-        metadataPath = f&#39;s3://{bucket_s3}/{name}_vocab.tsv&#39;
-
-        config = config_template.copy()
-        config[&#39;tensorName&#39;] = name
-        config[&#39;tensorPath&#39;] = tensorPath
-        config[&#39;metadataPath&#39;] = metadataPath
-        configs[&#39;embeddings&#39;].append(config)
-
-    with open(&#39;config_filename&#39;, &#39;w&#39;) as f:
-        json.dump(configs)
-
-    copy_to_s3(config_filename, bucket_s3)
-    config_url = &#39;s3://{bucket_s3}/{config_filename}&#39;
-    url = f&#39;http://projector.tensorflow.org/?config={config_url}&#39;
-
-    print(url)</code></pre>
-</details>
-</dd>
-<dt id="viz_embeddings.embeddings.vocab_embedding_files"><code class="name flex">
-<span>def <span class="ident">vocab_embedding_files</span></span>(<span>data_folder, name)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Saves vocabulary and embeddings files according to a pattern.
+<div class="desc"><p>Save embeddings files according to a pattern.
 </p>
 <p>Args:<br>
 data_folder (str): folder to storage embeddings<br>
-name (str): user embbedings name</p></div>
+name (str): user embeddings name</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def vocab_embedding_files(data_folder, name):
-    &#34;&#34;&#34;Saves vocabulary and embeddings files according to a pattern.  
+<pre><code class="python">def embeddings_files(data_folder, name):
+    &#34;&#34;&#34;Save embeddings files according to a pattern.  
 
     Args:  
         data_folder (str): folder to storage embeddings  
-        name (str): user embbedings name  
+        name (str): user embeddings name  
     &#34;&#34;&#34;
     embeddings_file = f&#39;{data_folder}/{name}_embeddings.tsv&#39;
     vocab_file = f&#39;{data_folder}/{name}_vocab.tsv&#39;
@@ -332,35 +234,118 @@ name (str): user embbedings name</p></div>
     return embeddings_file, vocab_file</code></pre>
 </details>
 </dd>
-<dt id="viz_embeddings.embeddings.vocab_embeddings_to_s3"><code class="name flex">
-<span>def <span class="ident">vocab_embeddings_to_s3</span></span>(<span>bucket_s3, name)</span>
+<dt id="viz_embeddings.embeddings.embeddings_to_s3"><code class="name flex">
+<span>def <span class="ident">embeddings_to_s3</span></span>(<span>bucket_name, name)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Copy embeddings and vocabulaty files to AWS S3 bucket
+<div class="desc"><p>Copy embeddings files to AWS S3 bucket.
 </p>
 <p>Files are copied from data_folder and according to name.
 </p>
 <p>Args:<br>
-bucket_s3 (str): AWS S3 bucket url<br>
-name (str): user embbedings name</p></div>
+bucket_name (str): AWS S3 bucket name<br>
+name (str): user embeddings name</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def vocab_embeddings_to_s3(bucket_s3, name):
-    &#34;&#34;&#34;Copy embeddings and vocabulaty files to AWS S3 bucket  
+<pre><code class="python">def embeddings_to_s3(bucket_name, name):
+    &#34;&#34;&#34;Copy embeddings files to AWS S3 bucket.  
 
     Files are copied from data_folder and according to name.  
 
     Args:  
-        bucket_s3 (str): AWS S3 bucket url  
-        name (str): user embbedings name  
+        bucket_name (str): AWS S3 bucket name  
+        name (str): user embeddings name  
     &#34;&#34;&#34;
     embeddings_file, vocab_file = \
-        vocab_embedding_files(data_folder, name)
+        embeddings_files(data_folder, name)
 
-    copy_to_s3(embbedings_file, bucket_s3)
-    copy_to_s3(vocab_file, bucket_s3)</code></pre>
+    copy_to_s3(embeddings_file, bucket_name)
+    copy_to_s3(vocab_file, bucket_name)</code></pre>
+</details>
+</dd>
+<dt id="viz_embeddings.embeddings.publish_embeddings"><code class="name flex">
+<span>def <span class="ident">publish_embeddings</span></span>(<span>names, bucket_name, bucket_region, config_filename)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Publish selected embeddings in Tensorflow Embedding Projector.
+</p>
+<p>Prints publishing link.<br>
+Selected embeddings are posted on AWS S3 bucket and their links are
+displayed in configuration file, which is used to create publishing
+link.</p>
+<p>Args:<br>
+names (list): selected names<br>
+bucket_name (str): AWS S3 bucket name<br>
+bucket_region(str): AWS S3 bucket region<br>
+config_filename (str): config filename</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def publish_embeddings(names, bucket_name, bucket_region, config_filename):
+    &#34;&#34;&#34;Publish selected embeddings in Tensorflow Embedding Projector.  
+
+    Prints publishing link.  
+    Selected embeddings are posted on AWS S3 bucket and their links are 
+    displayed in configuration file, which is used to create publishing 
+    link.
+
+    Args:  
+        names (list): selected names  
+        bucket_name (str): AWS S3 bucket name  
+        bucket_region(str): AWS S3 bucket region  
+        config_filename (str): config filename  
+    &#34;&#34;&#34;
+    configs = {&#34;embeddings&#34;: list()}
+    bucket_link = &#39;https://{bucket_name}.s3.{bucket_region}.amazonaws.com/&#39;
+
+    for name in names:
+        embeddings_to_s3(bucket_name, name)
+        tensorPath = f&#39;{bucket_link}/{name}_embeddings.tsv&#39;
+        metadataPath = f&#39;{bucket_link}/{name}_vocab.tsv&#39;
+
+        config = config_template.copy()
+        config[&#39;tensorName&#39;] = name
+        config[&#39;tensorPath&#39;] = tensorPath
+        config[&#39;metadataPath&#39;] = metadataPath
+
+        configs[&#39;embeddings&#39;].append(config)
+
+    with open(&#39;config_filename&#39;, &#39;w&#39;) as f:
+        json.dump(configs)
+
+    copy_to_s3(config_filename, bucket_name)
+    config_url = &#39;{bucket_link}/{config_filename}&#39;
+    url = f&#39;http://projector.tensorflow.org/?config={config_url}&#39;
+
+    print(url)</code></pre>
+</details>
+</dd>
+<dt id="viz_embeddings.embeddings.remove_embeddings"><code class="name flex">
+<span>def <span class="ident">remove_embeddings</span></span>(<span>name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Remove embeddings in data_folder.
+</p>
+<p>Args:<br>
+name (str): user embeddings name</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def remove_embeddings(name):
+    &#34;&#34;&#34;Remove embeddings in data_folder.  
+
+    Args:  
+        name (str): user embeddings name  
+    &#34;&#34;&#34;
+    embeddings_file, vocab_file = \
+        embeddings_files(data_folder, name)
+
+    for f in [embeddings_file, vocab_file]:
+        remove(f)</code></pre>
 </details>
 </dd>
 </dl>
@@ -382,11 +367,10 @@ name (str): user embbedings name</p></div>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="viz_embeddings.embeddings.add_embeddings" href="#viz_embeddings.embeddings.add_embeddings">add_embeddings</a></code></li>
-<li><code><a title="viz_embeddings.embeddings.copy_to_s3" href="#viz_embeddings.embeddings.copy_to_s3">copy_to_s3</a></code></li>
+<li><code><a title="viz_embeddings.embeddings.embeddings_files" href="#viz_embeddings.embeddings.embeddings_files">embeddings_files</a></code></li>
+<li><code><a title="viz_embeddings.embeddings.embeddings_to_s3" href="#viz_embeddings.embeddings.embeddings_to_s3">embeddings_to_s3</a></code></li>
+<li><code><a title="viz_embeddings.embeddings.publish_embeddings" href="#viz_embeddings.embeddings.publish_embeddings">publish_embeddings</a></code></li>
 <li><code><a title="viz_embeddings.embeddings.remove_embeddings" href="#viz_embeddings.embeddings.remove_embeddings">remove_embeddings</a></code></li>
-<li><code><a title="viz_embeddings.embeddings.set_config_file" href="#viz_embeddings.embeddings.set_config_file">set_config_file</a></code></li>
-<li><code><a title="viz_embeddings.embeddings.vocab_embedding_files" href="#viz_embeddings.embeddings.vocab_embedding_files">vocab_embedding_files</a></code></li>
-<li><code><a title="viz_embeddings.embeddings.vocab_embeddings_to_s3" href="#viz_embeddings.embeddings.vocab_embeddings_to_s3">vocab_embeddings_to_s3</a></code></li>
 </ul>
 </li>
 </ul>
