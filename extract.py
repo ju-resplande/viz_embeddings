@@ -1,8 +1,6 @@
 """Extractor for TensorFlow Embbeding Projector  
 
 Embbeding are extracted from text using HuggingFace Transformers.
-Vocabulary is saved as vocab.tsv.
-Embbedings vectors are saved as embedding.tsv.
 """
 
 from enum import Enum
@@ -260,21 +258,20 @@ def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
     
     return unique_vocab, unique_embeddings
 
-def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean, filter_func=lambda x: len(x) >= 3, unique = True, doc_stride=1, do_lower=False):
+def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file, aggr_func=torch.mean, filter_func=lambda x: len(x) >= 3, unique = True, doc_stride=1, do_lower=False):
     """Extract embeddings from text using Hugging Face model  
-
-        Embbedings are save as embeddings.tsv.  
-        Vocabulary is saved as vocabulary.tsv.  
-
             
         Args:  
             text (str): input text  
             model_name (str): Hugging Face model name  
-            level_name (str): text segmentation level name  
+            level_name (str): text segmentation level name
+            embeddings_file (str): file to save embeddings
+            vocab_file (str): file to save vocabulary
             aggr_func (func): function to aggregate tensor embbedings  
             filter_func (func): filter vocabulary level function  
             unique (bool): if terms on level_name should be unique  
-            do_lower (bool): when unique = True, whether considere cased  
+            do_lower (bool): when unique = True, whether considere cased
+
 
        Raises:  
             ValueError: f'There is no {level_name} segmentation.'  
@@ -285,7 +282,6 @@ def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean, filte
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModel.from_pretrained(model_name)
-
   
     words =  form_word_vocab(text)
     doc_length = math.ceil(len(words)/doc_stride)
@@ -329,6 +325,5 @@ def extract_embeddings(text, model_name, level_name, aggr_func=torch.mean, filte
     series = pd.Series(vocab)
     assert df.shape[0] == series.size
 
-    df.to_csv('embeddings.tsv', index=None, sep='\t', header=None)
-    series.to_csv('vocab.tsv', index=None, sep='\n', header=None)
-
+    df.to_csv(embeddings_file, index=None, sep='\t', header=None)
+    series.to_csv(vocab_file, index=None, sep='\n', header=None)
