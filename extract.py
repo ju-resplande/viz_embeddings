@@ -80,18 +80,18 @@ def form_token_embeddings(text, tokenizer, model):
     return embeddings
 
 
-def form_word_embeddings(text, words, tokenizer, model, aggr_func):
+def form_word_embeddings(text, words, tokenizer, model, pooling):
     """Generate tokens embeddings list.  
 
         Words composed by more than one token, have tokens embeddings 
-        combined in one embedding through aggr_func.
+        combined in one embedding through pooling.
 
         Args:  
             text (str): input text  
             words (str): word list  
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
-            aggr_func (func): Agreggation Function to form embedding  
+            pooling (func): Agreggation Function to form embedding  
 
        Returns:  
             embeddings (torch.tensor): tokens embeddings tensor
@@ -128,24 +128,24 @@ def form_word_embeddings(text, words, tokenizer, model, aggr_func):
                 word_embedding = token_tensor if word_embedding == None \
                                  else torch.cat((word_embedding, token_tensor), 0)
             
-            word_embedding = aggr_func(word_embedding, 0).unsqueeze(0)
+            word_embedding = pooling(word_embedding, 0).unsqueeze(0)
         else:
             raise TypeError('mapping should be list or int')
         word_embeddings = word_embedding if word_embeddings == None \
                           else torch.cat((word_embeddings, word_embedding), 0) 
     return word_embeddings
 
-def form_sentence_embeddings(sentences, tokenizer, model, aggr_func):
+def form_sentence_embeddings(sentences, tokenizer, model, pooling):
     """Generate sentence embeddings list.  
 
         Sentences composed by more than one token, have tokens embeddings 
-        combined in one embedding through aggr_func.  
+        combined in one embedding through pooling.  
 
         Args:  
             sentences (str): sentences list  
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
-            aggr_func (func): function to aggregate tensor embeddings  
+            pooling (func): function to aggregate tensor embeddings  
             
        Returns:  
             embeddings (torch.tensor): tokens embeddings tensor
@@ -153,14 +153,14 @@ def form_sentence_embeddings(sentences, tokenizer, model, aggr_func):
     sentence_embeddings = None
     for sentence in sentences:
         token_embeddings = form_token_embeddings(sentence, tokenizer, model)
-        sentence_embedding = aggr_func(token_embeddings, 0).unsqueeze(0)
+        sentence_embedding = pooling(token_embeddings, 0).unsqueeze(0)
         sentence_embeddings =  sentence_embedding if sentence_embeddings == None \
                             else torch.cat((sentence_embeddings, sentence_embedding), 0) 
 
 
     return  sentence_embeddings
 
-def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
+def vocabulary_and_embeddings(text, tokenizer, model, level, pooling):
     """Generate embeddings vector and vocabulary  
 
         Vocabulary is chopped according to level.
@@ -171,7 +171,7 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
             tokenizer (transformers.AutoTokenizer): HuggingFace Tokenizer  
             model (transformers.AutoModel): HuggingFace Transformer Model  
             level (str): Segmentation level  
-            aggr_func (func): function to aggregate tensor embeddings  
+            pooling (func): function to aggregate tensor embeddings  
 
        Returns:  
             vocab (list): embeddings vocabulary
@@ -183,10 +183,10 @@ def vocabulary_and_embeddings(text, tokenizer, model, level, aggr_func):
         embeddings = form_token_embeddings(text, tokenizer, model)
     elif level == 'word':
         vocab = form_word_vocab(text)
-        embeddings = form_word_embeddings(text, vocab, tokenizer, model, aggr_func)
+        embeddings = form_word_embeddings(text, vocab, tokenizer, model, pooling)
     elif level == 'sentence':
         vocab = form_sentence_vocab(text)
-        embeddings = form_sentence_embeddings(vocab, tokenizer, model, aggr_func)
+        embeddings = form_sentence_embeddings(vocab, tokenizer, model, pooling)
 
     return vocab, embeddings
 
@@ -215,7 +215,7 @@ def filter_vocabulary(vocab, embeddings, filter_func):
 
     return selected_vocab, selected_embedding
 
-def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
+def unique_vocabulary(vocab, embeddings, pooling, do_lower):
     """Combine repeated terms into a unique term.  
     
       Depends on segmentation level on vocab.
@@ -225,7 +225,7 @@ def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
         Args:  
             vocab(list): embeddings vocabulary  
             embeddings(list): embeddings vector  
-            aggr_func (func): torch function to aggregate tensor embeddings  
+            pooling (func): torch function to aggregate tensor embeddings  
              do_lower (bool): whether considere cased  
 
        Returns:  
@@ -250,14 +250,14 @@ def unique_vocabulary(vocab, embeddings, aggr_func, do_lower):
                 unique_embedding = selected if unique_embedding == None \
                                    else  torch.cat((unique_embedding, selected), 0)
 
-        unique_embedding = aggr_func(unique_embedding, 0).unsqueeze(0)
+        unique_embedding = pooling(unique_embedding, 0).unsqueeze(0)
 
         unique_embeddings = unique_embedding if unique_embeddings == None \
                             else torch.cat((unique_embeddings, unique_embedding), 0)
     
     return unique_vocab, unique_embeddings
 
-def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file, aggr_func=torch.mean, filter_func=lambda x: len(x) >= 3, unique = True, doc_stride=1, do_lower=False):
+def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file, pooling=torch.mean, filter_func=lambda x: len(x) >= 3, unique = True, doc_stride=1, do_lower=False):
     """Extract embeddings from text using Hugging Face model.  
 
         Args:  
@@ -266,7 +266,7 @@ def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file
             level_name (str): text segmentation level name  
             embeddings_file (str): file to save embeddings  
             vocab_file (str): file to save vocabulary  
-            aggr_func (func): torch function to aggregate tensor embeddings Default: torch.mean  
+            pooling (func): torch function to aggregate tensor embeddings Default: torch.mean  
             filter_func (func): filter vocabulary level function. Default: lambda x: len(x) >= 3  
             unique (bool): if terms on level_name should be unique. Default: True  
             doc_stride(int): number of segments to generate on level_name. Default: 1  
@@ -298,7 +298,7 @@ def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file
                                                                 tokenizer, 
                                                                 model, 
                                                                 level_name, 
-                                                                aggr_func)
+                                                                pooling)
             vocab.extend(doc_vocab)
             embeddings = doc_embeddings if embeddings == None \
                         else torch.cat((embeddings, doc_embeddings), 0)
@@ -310,7 +310,7 @@ def extract_embeddings(text, model_name, level_name, embeddings_file, vocab_file
     if unique:
         vocab, embeddings = unique_vocabulary(vocab, 
                                               embeddings,
-                                              aggr_func,
+                                              pooling,
                                               do_lower)
 
     if filter_func:
