@@ -44,8 +44,6 @@ def form_word_vocab(text):
        words (list) : words list
     """
 
-    nltk.download("punkt")
-
     words = nltk.word_tokenize(text)
     return words
 
@@ -310,11 +308,11 @@ def extract_embeddings(
 
 
     Raises:
-         ValueError: f'There is no {level_name} segmentation.'
+         ValueError: f"level_name can only be {Level._member_names_}."
     """
 
     if level_name not in Level._member_names_:
-        raise ValueError(f"There is no {level_name} segmentation.")
+        raise ValueError(f"level_name can only be {Level._member_names_}.")
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModel.from_pretrained(model_name)

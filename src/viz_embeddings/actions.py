@@ -1,15 +1,15 @@
 """
-    Embeddings operations
+    Embeddings actions
 """
 
 from os import path, remove
 from copy import copy
 import json
 
-from extract import extract_embeddings
+from features import extract_embeddings
 from utils import copy_to_s3
 
-data_folder = "data"
+data_folder = "../../data"
 
 config_template = {
     "tensorName": "",
@@ -101,7 +101,8 @@ def publish_embeddings(names, bucket_name, bucket_region, config_filename):
         config_filename (str): config filename
     """
     configs = {"embeddings": list()}
-    bucket_link = "https://{bucket_name}.s3.{bucket_region}.amazonaws.com/"
+    bucket_link = f"https://{bucket_name}.s3.{bucket_region}.amazonaws.com/"
+    config_file = f"{data_folder}/{config_filename}.json"
 
     for name in names:
         embeddings_to_s3(bucket_name, name)
@@ -115,11 +116,11 @@ def publish_embeddings(names, bucket_name, bucket_region, config_filename):
 
         configs["embeddings"].append(config)
 
-    with open("config_filename", "w") as f:
-        json.dump(configs)
+    with open(config_file, "w") as f:
+        json.dump(configs, f)
 
-    copy_to_s3(config_filename, bucket_name)
-    config_url = "{bucket_link}/{config_filename}"
+    copy_to_s3(config_file, bucket_name)
+    config_url = f"{bucket_link}/{config_file}"
     url = f"http://projector.tensorflow.org/?config={config_url}"
 
     print(url)
