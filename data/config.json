@@ -1,0 +1,1 @@
+{"embeddings": [{"tensorName": "test1", "tensorShape": [1000, 50], "tensorPath": "https://viz-embeddings.s3.sa-east-1.amazonaws.com//test1_embeddings.tsv", "metadataPath": "https://viz-embeddings.s3.sa-east-1.amazonaws.com//test1_vocab.tsv"}]}
